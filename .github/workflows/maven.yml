@@ -1,0 +1,24 @@
+name: Kiem Tra Code Tu Dong (CI)
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Muon mtinh ao chay he dieu hanh Linux của Github
+
+    steps:
+      - name: Tai code ve may ao
+        uses: actions/checkout@v4
+
+      - name: Cai dat Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Dich code va kiem tra loi bang Maven
+        run: mvn -B package --file pom.xml
