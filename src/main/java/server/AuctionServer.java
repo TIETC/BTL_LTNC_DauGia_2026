@@ -21,3 +21,4 @@ public class AuctionServer {
         }
     }
 }
+// Day la dong code test quy trinh tao nhanh
