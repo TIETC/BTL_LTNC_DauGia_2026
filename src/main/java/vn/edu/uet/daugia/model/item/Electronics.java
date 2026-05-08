@@ -1,4 +1,4 @@
-package model.item;
+package vn.edu.uet.daugia.model.item;
 
 import java.time.LocalDateTime;
 
