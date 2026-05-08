@@ -40,7 +40,7 @@ public class Auction extends Entity {
      * Người dùng đặt giá. Phải thread-safe vì nhiều người gọi đồng thời.
      */
     public void placeBid(Bidder bidder, double amount) {
-        lock.lock(); // Khóa lại — chỉ 1 thread vào được tại 1 thời điểm [cite: 222]
+        lock.lock(); // Khóa lại — chỉ 1 thread vào được tại 1 thời điểm
         try {
             // Kiểm tra 1: phiên có đang chạy không?
             if (status != AuctionStatus.RUNNING) {
@@ -55,13 +55,13 @@ public class Auction extends Entity {
             this.currentPrice = amount;
             this.currentLeader = bidder;
 
-            // Tạo bản ghi giao dịch (không bao giờ xóa)
+            // Tạo bản ghi giao dịch
             BidTransaction tx = new BidTransaction(bidder, this, amount);
             bidHistory.add(tx);
 
             System.out.println("[BID] " + bidder.getUsername() + " đặt " + amount + " | Phiên: " + item.getName());
         } finally {
-            lock.unlock(); // LUÔN LUÔN mở khóa dù có lỗi hay không [cite: 245]
+            lock.unlock(); // LUÔN LUÔN mở khóa dù có lỗi hay không
         }
     }
 
@@ -79,7 +79,7 @@ public class Auction extends Entity {
                 status = AuctionStatus.FINISHED;
                 System.out.println("[END] Người thắng: " + currentLeader.getUsername() + " | Giá: " + currentPrice);
             } else {
-                status = AuctionStatus.CANCELED; // không ai đặt giá [cite: 269]
+                status = AuctionStatus.CANCELED; // không ai đặt giá
             }
         } finally {
             lock.unlock();
@@ -90,18 +90,18 @@ public class Auction extends Entity {
         return (status == AuctionStatus.FINISHED) ? currentLeader : null;
     }
 
-    // Tự động đóng phiên bằng ScheduledExecutorService [cite: 291]
+    // Tự động đóng phiên bằng ScheduledExecutorService
     public void scheduleAutoClose() {
-        long delay = java.time.Duration.between(LocalDateTime.now(), endTime).toMillis(); [cite: 300, 301, 302]
+        long delay = java.time.Duration.between(LocalDateTime.now(), endTime).toMillis();
         if (delay <= 0) {
-            closeAuction(); //  đóng ngay [cite: 304]
+            closeAuction(); //  đóng ngay
             return;
         }
-        java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor(); [cite: 307, 308]
-        scheduler.schedule(() -> { [cite: 309]
-            closeAuction(); [cite: 310]
-            scheduler.shutdown(); [cite: 311]
-        }, delay, java.util.concurrent.TimeUnit.MILLISECONDS); [cite: 312]
+        java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> {
+            closeAuction();
+            scheduler.shutdown();
+        }, delay, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
 
     // --- Getters ---
@@ -113,6 +113,6 @@ public class Auction extends Entity {
 
     @Override
     public String getInfo() {
-        return String.format("[Auction] %s | Giá: %.0f | Trạng thái: %s", item.getName(), currentPrice, status); [cite: 287, 288]
+        return String.format("[Auction] %s | Giá: %.0f | Trạng thái: %s", item.getName(), currentPrice, status);
     }
 }
