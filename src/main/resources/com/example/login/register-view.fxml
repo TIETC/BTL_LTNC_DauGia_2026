@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="15.0" prefHeight="350.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.login.LoginController">
+    <Label text="ĐĂNG KÝ TÀI KHOẢN">
+        <font><Font name="System Bold" size="20.0" /></font>
+    </Label>
+    <TextField fx:id="regUsername" promptText="Tên đăng nhập mới" maxWidth="250.0"/>
+    <PasswordField fx:id="regPassword" promptText="Mật khẩu" maxWidth="250.0"/>
+    <PasswordField fx:id="confirmPassword" promptText="Xác nhận mật khẩu" maxWidth="250.0"/>
+
+    <HBox alignment="CENTER" spacing="10.0">
+        <Button text="Đăng ký" onAction="#handleRegisterSubmit" style="-fx-background-color: #28a745; -fx-text-fill: white;" />
+        <Button text="Quay lại" onAction="#switchToLogin" />
+    </HBox>
+</VBox>
