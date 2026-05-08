@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model.manager;
+package server;
 
 import vn.edu.uet.daugia.model.item.Item; // Import class Item đã tạo sẵn trong model.item
 
