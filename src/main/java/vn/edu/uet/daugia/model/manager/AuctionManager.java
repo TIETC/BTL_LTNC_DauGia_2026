@@ -1,6 +1,6 @@
-package model.manager;
+package vn.edu.uet.daugia.model.manager;
 
-import model.item.Item; // Import class Item đã tạo sẵn trong model.item
+import vn.edu.uet.daugia.model.item.Item; // Import class Item đã tạo sẵn trong model.item
 
 import java.util.ArrayList;
 import java.util.List;
