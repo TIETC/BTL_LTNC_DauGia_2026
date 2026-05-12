@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model.user;
+package vn.edu.uet.daugia.shared.model.user;
 
 public class Seller extends User {
     private String shopName;

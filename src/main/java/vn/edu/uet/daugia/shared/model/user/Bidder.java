@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model.user;
+package vn.edu.uet.daugia.shared.model.user;
 
 public class Bidder extends User {
     private double balance;

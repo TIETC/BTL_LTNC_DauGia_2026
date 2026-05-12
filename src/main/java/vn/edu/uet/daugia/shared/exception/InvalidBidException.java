@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model;
+package vn.edu.uet.daugia.shared.exception;
 
 public class InvalidBidException extends RuntimeException {
     public InvalidBidException(String message) {

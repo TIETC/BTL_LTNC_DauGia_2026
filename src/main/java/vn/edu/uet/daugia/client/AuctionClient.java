@@ -1,4 +1,4 @@
-package client;
+package vn.edu.uet.daugia.client;
 
 import java.net.Socket;
 
@@ -8,7 +8,7 @@ import java.io.InputStreamReader;
 
 import com.google.gson.Gson;
 
-import vn.edu.uet.daugia.model.BidMessage;
+import vn.edu.uet.daugia.shared.model.BidMessage;
 
 public class AuctionClient {
 
@@ -16,7 +16,7 @@ public class AuctionClient {
 
         try {
 
-            String serverAddress = "127.0.0.1";
+            String serverAddress = "10.213.45.248";
             int port = 5000;
 
             System.out.println(
@@ -54,7 +54,7 @@ public class AuctionClient {
             BidMessage bid =
                     new BidMessage(
                             "BID",
-                            "Quan",
+                            "Trung khim",
                             1200
                     );
 

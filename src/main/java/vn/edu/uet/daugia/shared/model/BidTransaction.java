@@ -1,7 +1,7 @@
-package vn.edu.uet.daugia.model;
+package vn.edu.uet.daugia.shared.model;
 
-import vn.edu.uet.daugia.model.entity.Entity;
-import vn.edu.uet.daugia.model.user.Bidder;
+import vn.edu.uet.daugia.shared.model.entity.Entity;
+import vn.edu.uet.daugia.shared.model.user.Bidder;
 import java.time.LocalDateTime;
 /**
  * Ghi lại MỘT lần đặt giá.

@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model;
+package vn.edu.uet.daugia.shared.model;
 
 public class BidMessage {
 

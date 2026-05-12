@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.model.entity;
+package vn.edu.uet.daugia.shared.model.entity;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

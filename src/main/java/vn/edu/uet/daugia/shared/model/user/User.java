@@ -1,5 +1,5 @@
-package vn.edu.uet.daugia.model.user;
-import vn.edu.uet.daugia.model.entity.Entity;
+package vn.edu.uet.daugia.shared.model.user;
+import vn.edu.uet.daugia.shared.model.entity.Entity;
 
 public abstract class User extends Entity {
     protected String username;

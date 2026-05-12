@@ -1,4 +1,4 @@
-package server;
+package vn.edu.uet.daugia.server;
 
 import java.net.Socket;
 
@@ -13,7 +13,7 @@ import java.sql.ResultSet;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import vn.edu.uet.daugia.model.BidMessage;
+import vn.edu.uet.daugia.shared.model.BidMessage;
 
 import vn.edu.uet.daugia.database.DatabaseConnection;
 

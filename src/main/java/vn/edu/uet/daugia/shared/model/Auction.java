@@ -1,9 +1,11 @@
-package vn.edu.uet.daugia.model;
+package vn.edu.uet.daugia.shared.model;
 
-import vn.edu.uet.daugia.model.entity.Entity;
-import vn.edu.uet.daugia.model.item.Item;
-import vn.edu.uet.daugia.model.user.Bidder;
-import vn.edu.uet.daugia.model.user.Seller;
+import vn.edu.uet.daugia.shared.exception.AuctionClosedException;
+import vn.edu.uet.daugia.shared.exception.InvalidBidException;
+import vn.edu.uet.daugia.shared.model.entity.Entity;
+import vn.edu.uet.daugia.shared.model.item.Item;
+import vn.edu.uet.daugia.shared.model.user.Bidder;
+import vn.edu.uet.daugia.shared.model.user.Seller;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -103,8 +105,6 @@ public class Auction extends Entity {
             scheduler.shutdown();
         }, delay, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
-
-    // --- Getters ---
     public double getCurrentPrice()          { return currentPrice; }
     public Bidder getCurrentLeader()         { return currentLeader; }
     public AuctionStatus getStatus()         { return status; }
@@ -114,5 +114,13 @@ public class Auction extends Entity {
     @Override
     public String getInfo() {
         return String.format("[Auction] %s | Giá: %.0f | Trạng thái: %s", item.getName(), currentPrice, status);
+    }
+    // Thêm vào dưới cùng class Auction.java
+    public String toJson() {
+        String leaderName = (currentLeader != null) ? currentLeader.getUsername() : "";
+        return String.format(
+                "{\"id\":\"%s\",\"itemName\":\"%s\",\"currentPrice\":%.0f,\"leader\":\"%s\",\"status\":\"%s\"}",
+                getId(), item.getName(), currentPrice, leaderName, status.name()
+        );
     }
 }
