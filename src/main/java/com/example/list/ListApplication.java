@@ -11,7 +11,7 @@ public class ListApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // Nạp file giao diện danh sách bạn đã tạo
-        FXMLLoader fxmlLoader = new FXMLLoader(ListApplication.class.getResource("/com/example/list/auction-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ListApplication.class.getResource("auction-view.fxml"));
 
         // Tạo cửa sổ với kích thước 600x500
         Scene scene = new Scene(fxmlLoader.load(), 600, 500);
@@ -25,4 +25,3 @@ public class ListApplication extends Application {
         launch();
     }
 }
-

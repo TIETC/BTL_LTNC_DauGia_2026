@@ -6,7 +6,7 @@ public class AuctionClient {
     public static void main(String[] args) {
         try {
             // Địa chỉ của Server. "127.0.0.1" (localhost) nghĩa là Server đang nằm ngay trên chính máy tính này
-            String serverAddress = "127.0.0.1";
+            String serverAddress = "10.213.45.248";
             int port = 5000;
 
             System.out.println("Đang tìm kiếm Máy chủ ở cổng " + port + "...");

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<VBox spacing="15.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.list.ProductDetailController">
+    <padding><Insets bottom="25.0" left="25.0" right="25.0" top="25.0" /></padding>
+
+    <Label fx:id="lblName" text="Tên sản phẩm">
+        <font><Font name="System Bold" size="18.0" /></font>
+    </Label>
+
+    <VBox spacing="5.0">
+        <Label fx:id="lblId" text="Mã SP: " />
+        <Label fx:id="lblSession" text="Phiên: " />
+        <Label fx:id="lblStartPrice" text="Giá khởi điểm: " />
+        <Label fx:id="lblDescription" text="Mô tả: " wrapText="true" />
+    </VBox>
+
+    <Separator />
+
+    <VBox spacing="10.0" style="-fx-background-color: #f4f4f4; -fx-padding: 15; -fx-background-radius: 10;">
+        <Label text="THỜI GIAN CÒN LẠI:" style="-fx-font-weight: bold;"/>
+        <Label fx:id="lblTimer" text="00:00:00" style="-fx-text-fill: red; -fx-font-size: 20px;"/>
+
+        <Label text="GIÁ HIỆN TẠI:" style="-fx-font-weight: bold;"/>
+        <Label fx:id="lblCurrentPrice" text="0 VNĐ" style="-fx-text-fill: green; -fx-font-size: 24px;"/>
+    </VBox>
+
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <TextField fx:id="txtBidAmount" promptText="Nhập mức tăng (VD: 500000)" HBox.hgrow="ALWAYS"/>
+        <Button text="Tăng giá" onAction="#handleBid" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;"/>
+    </HBox>
+</VBox>
