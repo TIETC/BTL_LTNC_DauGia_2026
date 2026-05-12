@@ -3,18 +3,17 @@ package vn.edu.uet.daugia.shared.model;
 public class BidMessage {
 
     private String type;
-    private String username;
-    private int price;
+    private String auctionId; // Bổ sung: Bắt buộc phải biết đang đấu giá món hàng nào
+    private String bidderId;  // Đổi username thành bidderId cho chuẩn với UserManager
+    private double price;     // SỬA QUAN TRỌNG: Phải là double để khớp với Core Logic của Trung
 
     public BidMessage() {
     }
 
-    public BidMessage(String type,
-                      String username,
-                      int price) {
-
+    public BidMessage(String type, String auctionId, String bidderId, double price) {
         this.type = type;
-        this.username = username;
+        this.auctionId = auctionId;
+        this.bidderId = bidderId;
         this.price = price;
     }
 
@@ -22,11 +21,15 @@ public class BidMessage {
         return type;
     }
 
-    public String getUsername() {
-        return username;
+    public String getAuctionId() {
+        return auctionId;
     }
 
-    public int getPrice() {
+    public String getBidderId() {
+        return bidderId;
+    }
+
+    public double getPrice() {
         return price;
     }
 }
