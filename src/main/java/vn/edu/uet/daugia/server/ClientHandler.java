@@ -7,57 +7,65 @@ import java.io.PrintWriter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import vn.edu.uet.daugia.shared.model.BidMessage;
+import vn.edu.uet.daugia.shared.model.Auction;
 
-public class ClientHandler implements Runnable {
+// 1. Gắn thêm tai nghe "AuctionObserver"
+public class ClientHandler implements Runnable, AuctionObserver {
 
     private Socket clientSocket;
-    // Gọi AuctionService
     private AuctionService auctionService;
+    private PrintWriter out; // 2. Đưa loa phát thanh lên làm tài sản chung của class
 
     public ClientHandler(Socket clientSocket) {
         this.clientSocket = clientSocket;
-        this.auctionService = new AuctionService(); // Khởi tạo Cầu nối
+        this.auctionService = new AuctionService();
+
+        // 3. Đăng ký thông tin với Trạm phát sóng (AuctionManager)
+        AuctionManager.getInstance().addObserver(this);
+    }
+// Hàm tự động chạy khi có lênh mới
+    @Override
+    public void onNewBid(Auction auction) {
+        if (out != null) {
+            // Đóng gói thông báo thành JSON và bắn thẳng về màn hình Client ( Không cần f5 )
+            out.println("{\"type\":\"NEW_BID\",\"data\":" + auction.toJson() + "}");
+        }
     }
 
     @Override
     public void run() {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            // Khởi tạo loa phát
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            String json = in.readLine();
-            System.out.println("Server nhận được: " + json);
+            String json;
+            // Vòng lặp liên tục lắng nghe yêu cầu từ Client
+            while ((json = in.readLine()) != null) {
+                System.out.println("Server nhận được: " + json);
 
-            Gson gson = new Gson();
-            JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
-            String type = jsonObject.get("type").getAsString();
-            // Đạt giá bid
-            if (type.equals("BID")) {
-                // Giả sử Client gửi JSON có chứa auctionId, bidderId và price
-                String auctionId = jsonObject.has("auctionId") ? jsonObject.get("auctionId").getAsString() : "SP01";
-                String bidderId = jsonObject.has("bidderId") ? jsonObject.get("bidderId").getAsString() : "user_123";
-                double price = jsonObject.get("price").getAsDouble();
+                Gson gson = new Gson();
+                JsonObject jsonObject = gson.fromJson(json, JsonObject.class);
+                String type = jsonObject.get("type").getAsString();
 
-                // GỌI XUỐNG CORE LOGIC CỦA (Đã bao gồm ReentrantLock)
-                String responseJson = auctionService.handlePlaceBid(auctionId, bidderId, price);
+                // XỬ LÝ LỆNH ĐẶT GIÁ
+                if (type.equals("BID")) {
+                    String auctionId = jsonObject.has("auctionId") ? jsonObject.get("auctionId").getAsString() : "SP01";
+                    String bidderId = jsonObject.has("bidderId") ? jsonObject.get("bidderId").getAsString() : "user_123";
+                    double price = jsonObject.get("price").getAsDouble();
 
-                // Gửi JSON kết quả ("OK" hoặc "ERROR") về cho Client
-                out.println(responseJson);
+                    String responseJson = auctionService.handlePlaceBid(auctionId, bidderId, price);
+                    out.println(responseJson);
+                }
+
+                // XỬ LÝ LỆNH LẤY DANH SÁCH
+                if (type.equals("GET_BIDS")) {
+                    String responseJson = auctionService.handleGetAuctions();
+                    out.println(responseJson);
+                }
             }
-
-            // LẤY DANH SÁCH PHIÊN (GET_BIDS)
-            if (type.equals("GET_BIDS")) {
-                // Gọi hàm lấy danh sách JSON
-                String responseJson = auctionService.handleGetAuctions();
-
-                // Gửi trả Client mảng JSON chuẩn
-                out.println(responseJson);
-            }
-
         } catch (Exception e) {
-            System.out.println("Lỗi ClientHandler!");
-            e.printStackTrace();
+            System.out.println("Client đã ngắt kết nối!");
         }
     }
 }

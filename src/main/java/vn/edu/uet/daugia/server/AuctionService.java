@@ -4,7 +4,6 @@ import vn.edu.uet.daugia.shared.exception.AuctionClosedException;
 import vn.edu.uet.daugia.shared.exception.InvalidBidException;
 import vn.edu.uet.daugia.shared.model.*;
 import vn.edu.uet.daugia.shared.model.user.*;
-// Import thư mục Exception của em vào đây
 
 public class AuctionService {
     private AuctionManager manager = AuctionManager.getInstance();
@@ -18,10 +17,12 @@ public class AuctionService {
             Auction auction = manager.findById(auctionId);
             Bidder bidder = UserManager.findBidder(bidderId);
 
-            // 2. Kích hoạt logic Đa luồng (ReentrantLock) của Trung
+            // 2. Kích hoạt logic Đa luồng (ReentrantLock)
             auction.placeBid(bidder, amount);
+            // Thông báo cho tất cả các Client khác là giá đã thay đổi!
+            manager.notifyObservers(auction);
 
-            // 3. Nếu thành công (Không bị văng lỗi), trả về JSON OK
+            // 3. Nếu thành công trả về JSON OK
             return String.format(
                     "{\"status\":\"OK\",\"currentPrice\":%.0f,\"leader\":\"%s\"}",
             auction.getCurrentPrice(),
