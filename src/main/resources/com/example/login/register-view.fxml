@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
@@ -12,28 +11,14 @@
 
 <StackPane prefHeight="450.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.login.RegisterController">
     <children>
-        <VBox alignment="CENTER" maxWidth="400.0" maxHeight="400.0" spacing="15.0" style="-fx-background-color: #f4f4f4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);">
-            <padding>
-                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-            </padding>
+        <VBox alignment="CENTER" maxWidth="400.0" spacing="15.0" style="-fx-background-color: #f4f4f4; -fx-background-radius: 10;">
+            <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
             <children>
-                <Label text="ĐĂNG KÝ TÀI KHOẢN">
-                    <font>
-                        <Font name="System Bold" size="22.0" />
-                    </font>
-                </Label>
-
-                <TextField fx:id="txtNewUsername" prefHeight="35.0" promptText="Tên đăng nhập mới" />
-                <PasswordField fx:id="txtNewPassword" prefHeight="35.0" promptText="Mật khẩu" />
-                <PasswordField fx:id="txtConfirmPassword" prefHeight="35.0" promptText="Xác nhận mật khẩu" />
-
-                <Button mnemonicParsing="false" onAction="#onRegisterButtonClick" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-cursor: hand;" text="Đăng ký">
-                    <font>
-                        <Font name="System Bold" size="14.0" />
-                    </font>
-                </Button>
-
-                <Hyperlink onAction="#switchToLogin" style="-fx-text-fill: #1a0dab;" text="Đã có tài khoản? Đăng nhập ngay" />
+                <Label text="ĐĂNG KÝ TÀI KHOẢN"><font><Font name="System Bold" size="22.0" /></font></Label>
+                <TextField promptText="Tên đăng nhập mới" prefHeight="35.0" />
+                <PasswordField promptText="Mật khẩu" prefHeight="35.0" />
+                <Button onAction="#onRegisterButtonClick" text="Đăng ký" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;" />
+                <Hyperlink onAction="#switchToLogin" text="Đã có tài khoản? Đăng nhập ngay" />
             </children>
         </VBox>
     </children>
