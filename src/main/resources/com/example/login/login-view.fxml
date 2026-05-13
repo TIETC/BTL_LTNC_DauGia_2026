@@ -33,13 +33,11 @@
                     </font>
                 </Button>
 
-                <!-- Dòng chữ đăng ký được thêm ở đây -->
-                <Hyperlink onAction="#switchToRegister" text="Chưa có tài khoản? Đăng ký ngay" style="-fx-text-fill: #1a0dab;">
+                <Hyperlink onAction="#switchToRegister" style="-fx-text-fill: #1a0dab;" text="Chưa có tài khoản? Đăng ký ngay">
                     <font>
                         <Font size="13.0" />
                     </font>
                 </Hyperlink>
-
             </children>
         </VBox>
     </children>
