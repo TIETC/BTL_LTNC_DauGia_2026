@@ -1,51 +1,175 @@
 package vn.edu.uet.daugia.client;
 
 import java.net.Socket;
+
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
 import com.google.gson.Gson;
+
 import vn.edu.uet.daugia.shared.model.BidMessage;
+import vn.edu.uet.daugia.shared.model.RegisterMessage;
 
 public class AuctionClient {
 
-    public static void main(String[] args) {
+    // =========================
+    // CONFIG
+    // =========================
+
+    private static final String SERVER_IP =
+            "10.11.71.231";
+
+    private static final int SERVER_PORT =
+            5000;
+
+    // =========================
+    // REGISTER
+    // =========================
+
+    public static void sendRegister(
+            String username,
+            String password
+    ) {
 
         try {
-            String serverAddress = "10.213.45.248";
-            int port = 5000;
 
-            System.out.println("Đang tìm kiếm Máy chủ ở cổng " + port + "...");
+            Socket socket =
+                    new Socket(
+                            SERVER_IP,
+                            SERVER_PORT
+                    );
 
-            // Kết nối server
-            Socket socket = new Socket(serverAddress, port);
-            System.out.println("Đã kết nối thành công tới Máy chủ Đấu giá!");
+            PrintWriter out =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
 
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            // Khởi tạo theo cấu trúc MỚI: (type, auctionId, bidderId, price)
-            BidMessage bid = new BidMessage(
-                    "BID",
-                    "SP01",        // Mã phiên đấu giá giả định
-                    "Trung khim",  // Bidder ID
-                    1200.0         // Giá tiền (Bắt buộc phải có .0 để thành kiểu double)
+            BufferedReader in =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            RegisterMessage register =
+                    new RegisterMessage(
+                            "REGISTER",
+                            username,
+                            password
+                    );
+
+            Gson gson =
+                    new Gson();
+
+            String json =
+                    gson.toJson(register);
+
+            out.println(json);
+
+            System.out.println(
+                    "Đã gửi REGISTER:"
             );
 
-            Gson gson = new Gson();
-            String json = gson.toJson(bid);
+            System.out.println(json);
 
-            // Gửi JSON
-            out.println(json);
-            System.out.println("Đã gửi JSON:\n" + json);
+            String response =
+                    in.readLine();
 
-            // Đọc phản hồi server
-            String response = in.readLine();
-            System.out.println("Server phản hồi:\n" + response);
+            System.out.println(
+                    "Server phản hồi:"
+            );
+
+            System.out.println(response);
 
             socket.close();
 
         } catch (Exception e) {
-            System.out.println("Không thể kết nối tới server!");
+
+            System.out.println(
+                    "Lỗi REGISTER!"
+            );
+
+            e.printStackTrace();
+        }
+    }
+
+    // =========================
+    // TEST MAIN
+    // =========================
+
+    public static void main(String[] args) {
+
+        try {
+
+            System.out.println(
+                    "Đang tìm kiếm Máy chủ ở cổng "
+                            + SERVER_PORT + "..."
+            );
+
+            Socket socket =
+                    new Socket(
+                            SERVER_IP,
+                            SERVER_PORT
+                    );
+
+            System.out.println(
+                    "Đã kết nối thành công tới Máy chủ Đấu giá!"
+            );
+
+            PrintWriter out =
+                    new PrintWriter(
+                            socket.getOutputStream(),
+                            true
+                    );
+
+            BufferedReader in =
+                    new BufferedReader(
+                            new InputStreamReader(
+                                    socket.getInputStream()
+                            )
+                    );
+
+            BidMessage bid =
+                    new BidMessage(
+                            "BID",
+                            "SP01",
+                            "Trung khim",
+                            1200.0
+                    );
+
+            Gson gson =
+                    new Gson();
+
+            String json =
+                    gson.toJson(bid);
+
+            out.println(json);
+
+            System.out.println(
+                    "Đã gửi JSON:"
+            );
+
+            System.out.println(json);
+
+            String response =
+                    in.readLine();
+
+            System.out.println(
+                    "Server phản hồi:"
+            );
+
+            System.out.println(response);
+
+            socket.close();
+
+        } catch (Exception e) {
+
+            System.out.println(
+                    "Không thể kết nối tới server!"
+            );
+
             e.printStackTrace();
         }
     }
