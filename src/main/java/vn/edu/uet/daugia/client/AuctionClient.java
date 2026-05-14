@@ -1,176 +1,63 @@
 package vn.edu.uet.daugia.client;
 
-import java.net.Socket;
+import javafx.application.Application;
+import javafx.stage.Stage;
 
-import java.io.PrintWriter;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-
+import vn.edu.uet.daugia.client.network.NetworkClient;
+import vn.edu.uet.daugia.client.util.SceneManager;
+import vn.edu.uet.daugia.shared.model.RegisterMessage;
 import com.google.gson.Gson;
 
-import vn.edu.uet.daugia.shared.model.BidMessage;
-import vn.edu.uet.daugia.shared.model.RegisterMessage;
-
-public class AuctionClient {
+public class AuctionClient extends Application {
 
     // =========================
     // CONFIG
     // =========================
-
-    private static final String SERVER_IP =
-            "10.11.71.231";
-
-    private static final int SERVER_PORT =
-            5000;
+    public static final String SERVER_IP = "10.11.6.187";
+    public static final int SERVER_PORT = 5000;
 
     // =========================
-    // REGISTER
+    // ĐIỂM KHỞI ĐỘNG JAVAFX
     // =========================
+    @Override
+    public void start(Stage stage) {
+        // Bước 1: Đăng ký Stage với SceneManager
+        SceneManager.setMainStage(stage);
 
-    public static void sendRegister(
-            String username,
-            String password
-    ) {
+        // Bước 2: Kết nối tới Server
+        NetworkClient.getInstance().connect(SERVER_IP, SERVER_PORT);
 
+        // Bước 3: Mở màn hình Login
+        SceneManager.switchScene("/view/Login.fxml", "Hệ thống đấu giá");
+
+        stage.show();
+    }
+
+    // =========================
+    // REGISTER — dùng kết nối chung
+    // =========================
+    public static void sendRegister(String username, String password) {
         try {
+            RegisterMessage register = new RegisterMessage("REGISTER", username, password);
+            Gson gson = new Gson();
+            String json = gson.toJson(register);
 
-            Socket socket =
-                    new Socket(
-                            SERVER_IP,
-                            SERVER_PORT
-                    );
+            NetworkClient.getInstance().sendRaw(json);
+            System.out.println("Đã gửi REGISTER: " + json);
 
-            PrintWriter out =
-                    new PrintWriter(
-                            socket.getOutputStream(),
-                            true
-                    );
-
-            BufferedReader in =
-                    new BufferedReader(
-                            new InputStreamReader(
-                                    socket.getInputStream()
-                            )
-                    );
-
-            RegisterMessage register =
-                    new RegisterMessage(
-                            "REGISTER",
-                            username,
-                            password
-                    );
-
-            Gson gson =
-                    new Gson();
-
-            String json =
-                    gson.toJson(register);
-
-            out.println(json);
-
-            System.out.println(
-                    "Đã gửi REGISTER:"
-            );
-
-            System.out.println(json);
-
-            String response =
-                    in.readLine();
-
-            System.out.println(
-                    "Server phản hồi:"
-            );
-
-            System.out.println(response);
-
-            socket.close();
+            String response = NetworkClient.getInstance().readResponse();
+            System.out.println("Server phản hồi: " + response);
 
         } catch (Exception e) {
-
-            System.out.println(
-                    "Lỗi REGISTER!"
-            );
-
+            System.out.println("Lỗi REGISTER!");
             e.printStackTrace();
         }
     }
 
     // =========================
-    // TEST MAIN
+    // MAIN
     // =========================
-
     public static void main(String[] args) {
-
-        try {
-
-            System.out.println(
-                    "Đang tìm kiếm Máy chủ ở cổng "
-                            + SERVER_PORT + "..."
-            );
-
-            Socket socket =
-                    new Socket(
-                            SERVER_IP,
-                            SERVER_PORT
-                    );
-
-            System.out.println(
-                    "Đã kết nối thành công tới Máy chủ Đấu giá!"
-            );
-
-            PrintWriter out =
-                    new PrintWriter(
-                            socket.getOutputStream(),
-                            true
-                    );
-
-            BufferedReader in =
-                    new BufferedReader(
-                            new InputStreamReader(
-                                    socket.getInputStream()
-                            )
-                    );
-
-            BidMessage bid =
-                    new BidMessage(
-                            "BID",
-                            "SP01",
-                            "Trung khim",
-                            1200.0
-                    );
-
-            Gson gson =
-                    new Gson();
-
-            String json =
-                    gson.toJson(bid);
-
-            out.println(json);
-
-            System.out.println(
-                    "Đã gửi JSON:"
-            );
-
-            System.out.println(json);
-
-            String response =
-                    in.readLine();
-
-            System.out.println(
-                    "Server phản hồi:"
-            );
-
-            System.out.println(response);
-
-            socket.close();
-
-        } catch (Exception e) {
-
-            System.out.println(
-                    "Không thể kết nối tới server!"
-            );
-
-            e.printStackTrace();
-        }
+        launch(args); // gọi start() ở trên
     }
 }

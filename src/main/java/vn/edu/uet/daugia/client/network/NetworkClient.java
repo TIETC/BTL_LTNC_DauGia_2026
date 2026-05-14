@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import com.google.gson.Gson;
-// Nhớ import đúng đường dẫn model BidMessage của nhóm bạn nhé
 import vn.edu.uet.daugia.shared.model.BidMessage;
 
 public class NetworkClient {
@@ -31,7 +30,6 @@ public class NetworkClient {
             System.out.println("Đang tìm kiếm Máy chủ ở cổng " + port + "...");
             socket = new Socket(serverAddress, port);
 
-            // Khởi tạo luồng Đọc/Ghi dữ liệu
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -41,7 +39,7 @@ public class NetworkClient {
         }
     }
 
-    // Hàm mới: Dùng để gửi tin nhắn JSON lên Server
+    // Hàm cũ: gửi BID
     public void sendBidMessage(BidMessage bid) {
         if (out != null) {
             String json = gson.toJson(bid);
@@ -50,6 +48,32 @@ public class NetworkClient {
         } else {
             System.err.println("Lỗi: Chưa kết nối được tới Server!");
         }
+    }
+
+    // THÊM MỚI: gửi bất kỳ JSON thô nào lên Server
+    // Dùng cho CREATE_AUCTION, GET_AUCTIONS, và các lệnh khác sau này
+    // Khác sendBidMessage ở chỗ: hàm này nhận thẳng chuỗi JSON, không cần tạo object
+    public void sendRaw(String json) {
+        if (out != null) {
+            out.println(json);
+            System.out.println("Đã gửi JSON lên Server: " + json);
+        } else {
+            System.err.println("Lỗi: Chưa kết nối tới Server! Gọi connect() trước.");
+        }
+    }
+
+    // THÊM MỚI: đọc phản hồi từ Server sau khi gửi lệnh
+    // Dùng khi cần biết Server xử lý thành công hay thất bại
+    // Ví dụ: sau CREATE_AUCTION, đọc về {"status":"OK"} hay {"status":"ERROR"}
+    public String readResponse() {
+        try {
+            if (in != null) {
+                return in.readLine(); // đọc 1 dòng phản hồi từ Server
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi đọc phản hồi từ Server: " + e.getMessage());
+        }
+        return null;
     }
 
     public Socket getSocket() {

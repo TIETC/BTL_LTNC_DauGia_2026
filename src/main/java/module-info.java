@@ -1,36 +1,64 @@
 module vn.edu.uet.daugia {
+
     requires javafx.controls;
     requires javafx.fxml;
+
     requires com.google.gson;
-    requires java.sql;
-    // Cho phép JavaFX truy cập vào package login
-    opens com.example.login to javafx.fxml;
-    exports com.example.login;
-    opens vn.edu.uet.daugia.shared.model to com.google.gson;
-    // Cần thêm dòng này để chạy được List
-    opens com.example.list to javafx.fxml;
-    exports com.example.list;
 
-    // Fix lỗi cho phần DatabaseConnection bên phía Server
     requires java.sql;
 
-    // --- BỔ SUNG: Cấp quyền cho Gson để có thể dịch class BidMessage sang JSON ---
+    // =========================
+    // LOGIN
+    // =========================
+
+
+    // =========================
+    // LIST
+    // =========================
+
+
+    // =========================
+    // SHARED MODEL
+    // =========================
+
+    opens vn.edu.uet.daugia.shared.model
+            to com.google.gson;
+
     exports vn.edu.uet.daugia.shared.model;
-    opens vn.edu.uet.daugia.shared.model to com.google.gson;
 
-    // 1. Cấp quyền cho package gốc của Client
+    // =========================
+    // CLIENT
+    // =========================
+
     exports vn.edu.uet.daugia.client;
-    opens vn.edu.uet.daugia.client to javafx.graphics, javafx.fxml;
 
-    // 2. Cấp quyền cho Controller
+    opens vn.edu.uet.daugia.client
+            to javafx.graphics,
+            javafx.fxml;
+
+    // =========================
+    // CLIENT CONTROLLER
+    // =========================
+
     exports vn.edu.uet.daugia.client.Controller;
-    opens vn.edu.uet.daugia.client.Controller to javafx.fxml;
 
-    // 3. Cấp quyền cho Model để TableView đọc được dữ liệu
+    opens vn.edu.uet.daugia.client.Controller
+            to javafx.fxml;
+
+    // =========================
+    // CLIENT MODEL
+    // =========================
+
     exports vn.edu.uet.daugia.client.model;
-    opens vn.edu.uet.daugia.client.model to javafx.base;
 
-    // 4. Cấp quyền cho các package tiện ích
+    opens vn.edu.uet.daugia.client.model
+            to javafx.base;
+
+    // =========================
+    // UTIL
+    // =========================
+
     exports vn.edu.uet.daugia.client.network;
+
     exports vn.edu.uet.daugia.client.util;
 }

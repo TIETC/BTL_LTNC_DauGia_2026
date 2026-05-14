@@ -35,7 +35,12 @@ public class AuctionManager {
             auctions.put(auction.getId(), auction);
         }
     }
-
+    // Hàm mới: cho phép đặt key tùy ý (ví dụ "SP01")
+    public void addAuction(String key, Auction auction) {
+        if (auction != null && key != null) {
+            auctions.put(key, auction);
+        }
+    }
     public Auction findById(String auctionId) {
         return auctions.get(auctionId);
     }

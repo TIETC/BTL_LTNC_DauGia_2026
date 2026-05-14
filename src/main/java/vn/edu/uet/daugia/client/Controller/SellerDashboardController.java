@@ -3,6 +3,10 @@ package vn.edu.uet.daugia.client.Controller;
 import vn.edu.uet.daugia.client.model.Product;
 import vn.edu.uet.daugia.client.util.AlertUtil;
 import vn.edu.uet.daugia.client.util.SceneManager;
+
+// THÊM MỚI: để gửi dữ liệu lên Server
+import vn.edu.uet.daugia.client.network.NetworkClient;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -17,21 +21,16 @@ public class SellerDashboardController {
     @FXML private TableView<Product> tableProducts;
     @FXML private TableColumn<Product, String> colId, colName, colSession;
     @FXML private TableColumn<Product, Double> colStartPrice;
-
-    // Đã bổ sung cột EndTime theo yêu cầu
     @FXML private TableColumn<Product, LocalDateTime> colEndTime;
 
     @FXML private TextField txtId, txtName, txtSession, txtStartPrice;
     @FXML private TextArea txtDescription;
-
-    // Đã bổ sung DatePicker
     @FXML private DatePicker dpEndTime;
 
     private ObservableList<Product> productList;
 
     @FXML
     public void initialize() {
-        // Khởi tạo danh sách trống hoặc load từ DB/Server
         productList = FXCollections.observableArrayList();
 
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -40,23 +39,18 @@ public class SellerDashboardController {
         colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
-        // Format lại cột ngày kết thúc cho đẹp (VD: 15/05/2026 23:59:59)
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         colEndTime.setCellFactory(tc -> new TableCell<Product, LocalDateTime>() {
             @Override
             protected void updateItem(LocalDateTime date, boolean empty) {
                 super.updateItem(date, empty);
-                if (empty || date == null) {
-                    setText(null);
-                } else {
-                    setText(formatter.format(date));
-                }
+                if (empty || date == null) setText(null);
+                else setText(formatter.format(date));
             }
         });
 
         tableProducts.setItems(productList);
 
-        // Lắng nghe sự kiện click vào bảng để đổ dữ liệu sang form
         tableProducts.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 txtId.setText(newSelection.getId());
@@ -64,13 +58,10 @@ public class SellerDashboardController {
                 txtSession.setText(newSelection.getSession());
                 txtStartPrice.setText(String.valueOf(newSelection.getStartPrice()));
                 txtDescription.setText(newSelection.getDescription());
-
-                // Đổ dữ liệu ngày kết thúc vào DatePicker
                 if (newSelection.getEndTime() != null) {
                     dpEndTime.setValue(newSelection.getEndTime().toLocalDate());
                 }
-
-                txtId.setDisable(true); // Không cho sửa mã SP khi cập nhật
+                txtId.setDisable(true);
             }
         });
     }
@@ -78,29 +69,55 @@ public class SellerDashboardController {
     @FXML
     private void handleAdd() {
         try {
+            // 1. Kiểm tra dữ liệu nhập
             if (txtId.getText().isEmpty() || txtName.getText().isEmpty()) {
                 AlertUtil.showError("Lỗi nhập liệu", "Vui lòng nhập đầy đủ Mã SP và Tên SP!");
                 return;
             }
             double price = Double.parseDouble(txtStartPrice.getText());
 
-            // Xử lý thời gian kết thúc: Nếu không chọn thì mặc định cộng thêm 10 phút
             LocalDateTime endTime;
             if (dpEndTime.getValue() != null) {
-                // Lấy ngày chọn và set thời gian mặc định là 23:59:59 của ngày đó
                 endTime = dpEndTime.getValue().atTime(23, 59, 59);
             } else {
                 endTime = LocalDateTime.now().plusMinutes(10);
             }
 
-            // Tạo sản phẩm mới
+            // 2. Tính số phút còn lại từ bây giờ đến endTime (để gửi lên Server)
+            long durationMinutes = java.time.Duration.between(
+                    LocalDateTime.now(), endTime
+            ).toMinutes();
+
+            if (durationMinutes <= 0) durationMinutes = 10; // tối thiểu 10 phút
+
+            // 3. Đóng gói JSON và gửi lên Server
+            //    Server sẽ tạo Auction và lưu vào AuctionManager + Database
+            String json = String.format(
+                    "{\"type\":\"CREATE_AUCTION\"," +
+                            "\"itemId\":\"%s\"," +
+                            "\"itemName\":\"%s\"," +
+                            "\"description\":\"%s\"," +
+                            "\"startPrice\":%.0f," +
+                            "\"sellerName\":\"seller01\"," +   // sau này thay bằng tên người đang đăng nhập
+                            "\"durationMinutes\":%d}",
+                    txtId.getText(),
+                    txtName.getText(),
+                    txtDescription.getText(),
+                    price,
+                    durationMinutes
+            );
+
+            NetworkClient.getInstance().sendRaw(json);
+            System.out.println("Đã gửi CREATE_AUCTION lên Server: " + txtId.getText());
+
+            // 4. Cập nhật TableView trên màn hình ngay (không cần chờ Server phản hồi)
             Product newProduct = new Product(
                     txtId.getText(), txtName.getText(), txtSession.getText(),
                     price, price, txtDescription.getText(), endTime
             );
-
             productList.add(newProduct);
-            AlertUtil.showSuccess("Thành công", "Đã thêm sản phẩm mới!");
+
+            AlertUtil.showSuccess("Thành công", "Đã tạo phiên đấu giá: " + txtName.getText());
             handleClear();
 
         } catch (NumberFormatException e) {
@@ -110,6 +127,8 @@ public class SellerDashboardController {
 
     @FXML
     private void handleUpdate() {
+        // Phần update chỉ cập nhật UI cục bộ, chưa cần gửi Server
+        // (vì đề bài không yêu cầu sửa phiên đang chạy)
         Product selectedProduct = tableProducts.getSelectionModel().getSelectedItem();
         if (selectedProduct == null) {
             AlertUtil.showError("Lỗi", "Vui lòng chọn một sản phẩm trong bảng để cập nhật!");
@@ -117,12 +136,9 @@ public class SellerDashboardController {
         }
 
         try {
-            // Xóa sản phẩm cũ đi (Cập nhật UI cục bộ)
             tableProducts.getItems().remove(selectedProduct);
-
             double price = Double.parseDouble(txtStartPrice.getText());
 
-            // Xử lý cập nhật thời gian
             LocalDateTime endTime = (dpEndTime.getValue() != null)
                     ? dpEndTime.getValue().atTime(23, 59, 59)
                     : selectedProduct.getEndTime();
@@ -162,11 +178,10 @@ public class SellerDashboardController {
         txtSession.clear();
         txtStartPrice.clear();
         txtDescription.clear();
-        dpEndTime.setValue(null); // Reset lại DatePicker
+        dpEndTime.setValue(null);
         tableProducts.getSelectionModel().clearSelection();
     }
 
-    // Nút điều hướng quay lại
     @FXML
     private void handleBack() {
         SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
