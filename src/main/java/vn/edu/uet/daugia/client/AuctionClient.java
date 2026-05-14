@@ -12,7 +12,7 @@ public class AuctionClient {
     public static void main(String[] args) {
 
         try {
-            String serverAddress = "10.213.45.248";
+            String serverAddress = "10.11.71.231";
             int port = 5000;
 
             System.out.println("Đang tìm kiếm Máy chủ ở cổng " + port + "...");

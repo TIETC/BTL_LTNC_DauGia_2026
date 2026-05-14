@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="650.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.Controller.SellerDashboardController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0" style="-fx-background-color: #2c3e50; -fx-padding: 15;">
+            <Button onAction="#handleBack" text="⬅ Trở lại" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Label text="QUẢN TRỊ VIÊN / NGƯỜI BÁN" textFill="WHITE">
+                <font><Font name="System Bold" size="20.0" /></font>
+            </Label>
+        </HBox>
+    </top>
+    <left>
+        <VBox spacing="15.0" style="-fx-padding: 20; -fx-background-color: #ecf0f1;" prefWidth="350.0">
+            <Label text="Chi tiết sản phẩm mới" style="-fx-font-weight: bold; -fx-font-size: 15px;"/>
+
+            <TextField fx:id="txtId" promptText="Mã sản phẩm (VD: SP01)"/>
+            <TextField fx:id="txtName" promptText="Tên sản phẩm"/>
+            <TextField fx:id="txtSession" promptText="Phiên đấu giá (Sáng/Chiều)"/>
+            <TextField fx:id="txtStartPrice" promptText="Giá khởi điểm (VNĐ)"/>
+
+            <Label text="Ngày kết thúc:"/>
+            <DatePicker fx:id="dpEndTime" prefWidth="310.0"/>
+
+            <TextArea fx:id="txtDescription" prefHeight="100.0" promptText="Mô tả kỹ thuật chi tiết..." wrapText="true"/>
+
+            <Separator/>
+            <HBox spacing="10.0" alignment="CENTER">
+                <Button onAction="#handleAdd" prefWidth="100.0" style="-fx-background-color: #27ae60; -fx-text-fill: white;" text="Thêm +"/>
+                <Button onAction="#handleUpdate" prefWidth="100.0" style="-fx-background-color: #f39c12; -fx-text-fill: white;" text="Sửa ✎"/>
+                <Button onAction="#handleDelete" prefWidth="100.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white;" text="Xóa ❌"/>
+            </HBox>
+            <Button onAction="#handleClear" prefWidth="310.0" text="Làm sạch Form"/>
+        </VBox>
+    </left>
+    <center>
+        <VBox spacing="10.0" style="-fx-padding: 10;">
+            <Label text="Danh sách sản phẩm đang quản lý" style="-fx-font-weight: bold;"/>
+            <TableView fx:id="tableProducts" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colId" text="Mã SP" prefWidth="70"/>
+                    <TableColumn fx:id="colName" text="Tên sản phẩm" prefWidth="180"/>
+                    <TableColumn fx:id="colSession" text="Phiên" prefWidth="80"/>
+                    <TableColumn fx:id="colStartPrice" text="Giá khởi điểm" prefWidth="130"/>
+                    <TableColumn fx:id="colEndTime" text="Ngày kết thúc" prefWidth="150"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>

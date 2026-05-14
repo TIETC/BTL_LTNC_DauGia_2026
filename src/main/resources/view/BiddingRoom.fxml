@@ -3,8 +3,10 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 
-<VBox spacing="15.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.list.ProductDetailController">
+<VBox spacing="15.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.Controller.BiddingRoomController">
     <padding><Insets bottom="25.0" left="25.0" right="25.0" top="25.0" /></padding>
 
     <Label fx:id="lblName" text="Tên sản phẩm">
@@ -27,6 +29,15 @@
         <Label text="GIÁ HIỆN TẠI:" style="-fx-font-weight: bold;"/>
         <Label fx:id="lblCurrentPrice" text="0 VNĐ" style="-fx-text-fill: green; -fx-font-size: 24px;"/>
     </VBox>
+
+    <LineChart fx:id="priceChart" title="Biểu đồ lịch sử giá (Realtime)" prefHeight="250.0">
+        <xAxis>
+            <NumberAxis label="Lượt Bid" fx:id="xAxis" forceZeroInRange="false" autoRanging="true"/>
+        </xAxis>
+        <yAxis>
+            <NumberAxis label="Mức giá (VNĐ)" fx:id="yAxis" forceZeroInRange="false" autoRanging="true"/>
+        </yAxis>
+    </LineChart>
 
     <HBox spacing="10.0" alignment="CENTER_LEFT">
         <TextField fx:id="txtBidAmount" promptText="Nhập mức tăng (VD: 500000)" HBox.hgrow="ALWAYS"/>
