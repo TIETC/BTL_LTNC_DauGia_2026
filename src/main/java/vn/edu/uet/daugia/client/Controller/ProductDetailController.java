@@ -22,9 +22,9 @@ public class ProductDetailController {
 
     @FXML
     private void handleJoinAuction() {
-        // Chuyển từ Chi tiết sang Phòng Đấu giá
+        // LUỒNG ĐI TIẾP: Sang Trang 3 (Phòng đấu giá)
         BiddingRoomController controller = SceneManager.switchSceneAndGetController(
-                "/view/BiddingRoom.fxml", "Phòng Đấu Giá: " + product.getName()
+                "/view/BiddingRoom.fxml", "Trang 3: Đấu giá: " + product.getName()
         );
         if (controller != null) {
             controller.setProductData(product);
@@ -33,6 +33,7 @@ public class ProductDetailController {
 
     @FXML
     private void handleBack() {
+        // LUỒNG QUAY LẠI: Về Trang 1 (Danh sách sản phẩm)
         SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
     }
 }

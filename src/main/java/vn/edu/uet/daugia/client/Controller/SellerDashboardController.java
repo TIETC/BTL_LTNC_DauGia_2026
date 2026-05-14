@@ -3,16 +3,13 @@ package vn.edu.uet.daugia.client.Controller;
 import vn.edu.uet.daugia.client.model.Product;
 import vn.edu.uet.daugia.client.util.AlertUtil;
 import vn.edu.uet.daugia.client.util.SceneManager;
-
-// THÊM MỚI: để gửi dữ liệu lên Server
+import vn.edu.uet.daugia.client.util.SessionManager;
 import vn.edu.uet.daugia.client.network.NetworkClient;
-
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -21,47 +18,95 @@ public class SellerDashboardController {
     @FXML private TableView<Product> tableProducts;
     @FXML private TableColumn<Product, String> colId, colName, colSession;
     @FXML private TableColumn<Product, Double> colStartPrice;
-    @FXML private TableColumn<Product, LocalDateTime> colEndTime;
+    @FXML private TableColumn<Product, LocalDateTime> colStartTime, colEndTime;
 
     @FXML private TextField txtId, txtName, txtSession, txtStartPrice;
     @FXML private TextArea txtDescription;
+
+    // Các trường thời gian Kết thúc
     @FXML private DatePicker dpEndTime;
+    @FXML private Spinner<Integer> spinHour, spinMin, spinSec;
+
+    // Các trường thời gian Bắt đầu
+    @FXML private DatePicker dpStartTime;
+    @FXML private Spinner<Integer> spinStartHour, spinStartMin, spinStartSec;
 
     private ObservableList<Product> productList;
 
     @FXML
     public void initialize() {
+        // --- BỔ SUNG: KHÓA CỬA BẢO MẬT ---
+        String role = SessionManager.getRole();
+        if (!"ADMIN".equals(role) && !"SELLER".equals(role)) {
+            // Nếu là kẻ đột nhập (Bidder hoặc khách), đá về trang Login hoặc Danh sách
+            javafx.application.Platform.runLater(() -> {
+                AlertUtil.showError("Cảnh báo bảo mật", "Bạn không có quyền truy cập khu vực này!");
+                SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
+            });
+            return; // Dừng khởi tạo các thành phần bên dưới
+        }
         productList = FXCollections.observableArrayList();
 
+        // 1. Khởi tạo Spinner
+        initSpinner(spinHour, 23, 23); initSpinner(spinMin, 59, 59); initSpinner(spinSec, 59, 59);
+        LocalDateTime now = LocalDateTime.now();
+        initSpinner(spinStartHour, 23, now.getHour()); initSpinner(spinStartMin, 59, now.getMinute()); initSpinner(spinStartSec, 59, now.getSecond());
+        dpStartTime.setValue(now.toLocalDate());
+
+        // 2. Cấu hình Column TableView
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colSession.setCellValueFactory(new PropertyValueFactory<>("session"));
-        colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
+        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
         colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        colEndTime.setCellFactory(tc -> new TableCell<Product, LocalDateTime>() {
+        // Format tiền tệ tránh 1.0E8
+        colStartPrice.setCellFactory(tc -> new TableCell<>() {
             @Override
-            protected void updateItem(LocalDateTime date, boolean empty) {
-                super.updateItem(date, empty);
-                if (empty || date == null) setText(null);
-                else setText(formatter.format(date));
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty || price == null) setText(null);
+                else setText(String.format("%,.0f VNĐ", price));
             }
         });
 
+        // Định dạng ngày tháng
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        setupDateCell(colStartTime, formatter);
+        setupDateCell(colEndTime, formatter);
+
         tableProducts.setItems(productList);
 
+        // 3. Lắng nghe chọn dòng để đổ dữ liệu (SYNC FORM)
         tableProducts.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
             if (newSelection != null) {
                 txtId.setText(newSelection.getId());
                 txtName.setText(newSelection.getName());
                 txtSession.setText(newSelection.getSession());
-                txtStartPrice.setText(String.valueOf(newSelection.getStartPrice()));
+                txtStartPrice.setText(String.format("%.0f", newSelection.getStartPrice()));
                 txtDescription.setText(newSelection.getDescription());
+                if (newSelection.getStartTime() != null) {
+                    dpStartTime.setValue(newSelection.getStartTime().toLocalDate());
+                    spinStartHour.getValueFactory().setValue(newSelection.getStartTime().getHour());
+                }
                 if (newSelection.getEndTime() != null) {
                     dpEndTime.setValue(newSelection.getEndTime().toLocalDate());
+                    spinHour.getValueFactory().setValue(newSelection.getEndTime().getHour());
                 }
                 txtId.setDisable(true);
+            }
+        });
+    }
+
+    private void initSpinner(Spinner<Integer> s, int max, int val) {
+        s.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, max, val));
+    }
+
+    private void setupDateCell(TableColumn<Product, LocalDateTime> col, DateTimeFormatter fmt) {
+        col.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(LocalDateTime d, boolean e) {
+                super.updateItem(d, e);
+                if (e || d == null) setText(null); else setText(fmt.format(d));
             }
         });
     }
@@ -69,126 +114,79 @@ public class SellerDashboardController {
     @FXML
     private void handleAdd() {
         try {
-            // 1. Kiểm tra dữ liệu nhập
-            if (txtId.getText().isEmpty() || txtName.getText().isEmpty()) {
-                AlertUtil.showError("Lỗi nhập liệu", "Vui lòng nhập đầy đủ Mã SP và Tên SP!");
-                return;
+            if (txtId.getText().isEmpty() || txtName.getText().isEmpty() || dpEndTime.getValue() == null) {
+                AlertUtil.showError("Lỗi", "Vui lòng nhập đầy đủ thông tin!"); return;
             }
             double price = Double.parseDouble(txtStartPrice.getText());
+            LocalDateTime start = dpStartTime.getValue().atTime(spinStartHour.getValue(), spinStartMin.getValue(), spinStartSec.getValue());
+            LocalDateTime end = dpEndTime.getValue().atTime(spinHour.getValue(), spinMin.getValue(), spinSec.getValue());
 
-            LocalDateTime endTime;
-            if (dpEndTime.getValue() != null) {
-                endTime = dpEndTime.getValue().atTime(23, 59, 59);
-            } else {
-                endTime = LocalDateTime.now().plusMinutes(10);
+            if (end.isBefore(start)) {
+                AlertUtil.showError("Lỗi", "Ngày kết thúc phải sau ngày bắt đầu!"); return;
             }
 
-            // 2. Tính số phút còn lại từ bây giờ đến endTime (để gửi lên Server)
-            long durationMinutes = java.time.Duration.between(
-                    LocalDateTime.now(), endTime
-            ).toMinutes();
+            long durationMinutes = java.time.Duration.between(start, end).toMinutes();
 
-            if (durationMinutes <= 0) durationMinutes = 10; // tối thiểu 10 phút
-
-            // 3. Đóng gói JSON và gửi lên Server
-            //    Server sẽ tạo Auction và lưu vào AuctionManager + Database
+            // --- LOGIC GỬI JSON NGUYÊN BẢN CỦA BẠN ---
             String json = String.format(
                     "{\"type\":\"CREATE_AUCTION\"," +
                             "\"itemId\":\"%s\"," +
                             "\"itemName\":\"%s\"," +
                             "\"description\":\"%s\"," +
                             "\"startPrice\":%.0f," +
-                            "\"sellerName\":\"seller01\"," +   // sau này thay bằng tên người đang đăng nhập
+                            "\"sellerName\":\"%s\"," +
                             "\"durationMinutes\":%d}",
-                    txtId.getText(),
-                    txtName.getText(),
-                    txtDescription.getText(),
-                    price,
-                    durationMinutes
+                    txtId.getText(), txtName.getText(), txtDescription.getText(),
+                    price, SessionManager.getUsername(), durationMinutes
             );
 
             NetworkClient.getInstance().sendRaw(json);
-            System.out.println("Đã gửi CREATE_AUCTION lên Server: " + txtId.getText());
-
-            // 4. Cập nhật TableView trên màn hình ngay (không cần chờ Server phản hồi)
-            Product newProduct = new Product(
-                    txtId.getText(), txtName.getText(), txtSession.getText(),
-                    price, price, txtDescription.getText(), endTime
-            );
-            productList.add(newProduct);
-
-            AlertUtil.showSuccess("Thành công", "Đã tạo phiên đấu giá: " + txtName.getText());
+            productList.add(new Product(txtId.getText(), txtName.getText(), txtSession.getText(), price, price, txtDescription.getText(), start, end));
+            AlertUtil.showSuccess("Thành công", "Đã tạo phiên đấu giá mới!");
             handleClear();
-
-        } catch (NumberFormatException e) {
-            AlertUtil.showError("Lỗi định dạng", "Giá khởi điểm phải là một số hợp lệ!");
-        }
+        } catch (Exception e) { AlertUtil.showError("Lỗi", "Dữ liệu không hợp lệ!"); }
     }
 
     @FXML
     private void handleUpdate() {
-        // Phần update chỉ cập nhật UI cục bộ, chưa cần gửi Server
-        // (vì đề bài không yêu cầu sửa phiên đang chạy)
-        Product selectedProduct = tableProducts.getSelectionModel().getSelectedItem();
-        if (selectedProduct == null) {
-            AlertUtil.showError("Lỗi", "Vui lòng chọn một sản phẩm trong bảng để cập nhật!");
-            return;
-        }
-
+        Product selected = tableProducts.getSelectionModel().getSelectedItem();
+        if (selected == null) return;
         try {
-            tableProducts.getItems().remove(selectedProduct);
-            double price = Double.parseDouble(txtStartPrice.getText());
-
-            LocalDateTime endTime = (dpEndTime.getValue() != null)
-                    ? dpEndTime.getValue().atTime(23, 59, 59)
-                    : selectedProduct.getEndTime();
-
-            Product updatedProduct = new Product(
-                    txtId.getText(), txtName.getText(), txtSession.getText(),
-                    price, price, txtDescription.getText(), endTime
-            );
-
-            productList.add(updatedProduct);
-            tableProducts.refresh();
-            AlertUtil.showSuccess("Thành công", "Cập nhật sản phẩm thành công!");
-            handleClear();
-
-        } catch (NumberFormatException e) {
-            AlertUtil.showError("Lỗi định dạng", "Giá khởi điểm phải là số hợp lệ!");
-        }
+            productList.remove(selected);
+            LocalDateTime start = dpStartTime.getValue().atTime(spinStartHour.getValue(), spinStartMin.getValue(), spinStartSec.getValue());
+            LocalDateTime end = dpEndTime.getValue().atTime(spinHour.getValue(), spinMin.getValue(), spinSec.getValue());
+            Product updated = new Product(txtId.getText(), txtName.getText(), txtSession.getText(), Double.parseDouble(txtStartPrice.getText()), Double.parseDouble(txtStartPrice.getText()), txtDescription.getText(), start, end);
+            productList.add(updated);
+            tableProducts.refresh(); handleClear();
+        } catch (Exception e) { AlertUtil.showError("Lỗi", "Sai định dạng!"); }
     }
 
     @FXML
     private void handleDelete() {
-        Product selectedProduct = tableProducts.getSelectionModel().getSelectedItem();
-        if (selectedProduct != null) {
-            productList.remove(selectedProduct);
-            AlertUtil.showSuccess("Thành công", "Đã xóa sản phẩm!");
-            handleClear();
-        } else {
-            AlertUtil.showError("Lỗi", "Vui lòng chọn sản phẩm cần xóa!");
-        }
+        Product s = tableProducts.getSelectionModel().getSelectedItem();
+        if (s != null) { productList.remove(s); handleClear(); }
     }
 
     @FXML
     private void handleClear() {
-        txtId.clear();
-        txtId.setDisable(false);
-        txtName.clear();
-        txtSession.clear();
-        txtStartPrice.clear();
-        txtDescription.clear();
-        dpEndTime.setValue(null);
+        txtId.clear(); txtId.setDisable(false); txtName.clear(); txtSession.clear(); txtStartPrice.clear(); txtDescription.clear();
+        LocalDateTime now = LocalDateTime.now();
+        dpStartTime.setValue(now.toLocalDate()); dpEndTime.setValue(null);
         tableProducts.getSelectionModel().clearSelection();
     }
 
     @FXML
     private void handleBack() {
-        SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
+        if ("ADMIN".equals(SessionManager.getRole())) {
+            SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
+        } else {
+            AlertUtil.showError("Hạn chế", "Người bán không có quyền quay lại danh sách mua!");
+        }
     }
 
     @FXML
     private void handleLogout() {
+        SessionManager.logout();
         SceneManager.switchScene("/view/Login.fxml", "Đăng nhập hệ thống");
     }
 }
