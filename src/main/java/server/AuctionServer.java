@@ -1,24 +1,60 @@
 package server;
 
 import java.net.ServerSocket;
-import java.net.Socket; 
+import java.net.Socket;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class AuctionServer {
-    public static void main(String[] args) {
-        try {
-            int port = 5000;
-            ServerSocket serverSocket = new ServerSocket(port);
-            System.out.println("Máy chủ Đấu giá đang chạy trên cổng " + port + " và chờ khách hàng kết nối...");
 
-            // Lệnh accept() bắt Server phải "đóng băng" đứng đợi ở đây
-            // cho đến khi nào có một Client kết nối vào thì nó mới chạy tiếp.
-            Socket clientSocket = serverSocket.accept();
-            System.out.println("Đã có một Khách hàng vừa kết nối vào Server!");
+    public static void main(String[] args) {
+
+        try {
+
+            int port = 5000;
+
+            // Mở cổng server
+            ServerSocket serverSocket =
+                    new ServerSocket(port);
+
+            System.out.println(
+                    "Server đang chạy ở cổng "
+                            + port
+            );
+
+            // Tạo thread pool
+            ExecutorService pool =
+                    Executors.newFixedThreadPool(10);
+
+            // Server chạy liên tục
+            while (true) {
+
+                System.out.println(
+                        "Đang chờ client kết nối..."
+                );
+
+                // Chờ client
+                Socket clientSocket =
+                        serverSocket.accept();
+
+                System.out.println(
+                        "Client đã kết nối!"
+                );
+
+                // Giao client cho thread xử lý
+                pool.execute(
+                        new ClientHandler(clientSocket)
+                );
+            }
 
         } catch (Exception e) {
-            System.out.println("Có lỗi xảy ra khi khởi động Server!");
+
+            System.out.println(
+                    "Lỗi server!"
+            );
+
             e.printStackTrace();
         }
     }
 }
-// Day la dong code test quy trinh tao nhanh
