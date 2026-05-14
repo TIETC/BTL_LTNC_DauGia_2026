@@ -1,4 +1,4 @@
-package com.example.login;
+package vn.edu.uet.daugia.client.Controller;
 
 import javafx.event.ActionEvent;
 
@@ -33,6 +33,11 @@ public class RegisterController {
     protected void switchToLogin(ActionEvent event) {
 
         try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/login/Login.fxml"));
+            Parent root = loader.load();
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.setTitle("Đăng nhập");
 
             FXMLLoader loader =
                     new FXMLLoader(

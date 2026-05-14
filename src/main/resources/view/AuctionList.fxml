@@ -9,13 +9,14 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_CENTER" prefHeight="550.0" prefWidth="800.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.list.AuctionController">
+<VBox alignment="TOP_CENTER" prefHeight="550.0" prefWidth="800.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.Controller.AuctionListController">
     <children>
-        <HBox alignment="TOP_RIGHT" prefWidth="800.0">
+        <HBox alignment="TOP_RIGHT" prefWidth="800.0" spacing="15.0">
             <padding>
                 <Insets right="20.0" top="15.0" />
             </padding>
             <children>
+                <Button mnemonicParsing="false" onAction="#handleSwitchToSeller" style="-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;" text="Giao diện Seller" />
                 <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Đăng xuất" />
             </children>
         </HBox>
