@@ -3,16 +3,22 @@ package vn.edu.uet.daugia.server;
 import vn.edu.uet.daugia.shared.model.Auction;
 import vn.edu.uet.daugia.shared.model.AuctionStatus;
 
-import java.util.ArrayList;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class AuctionManager {
 
     private static volatile AuctionManager instance;
-
     private ConcurrentHashMap<String, Auction> auctions;
+
+    // Danh sách tất cả client đang kết nối (dùng PrintWriter để gửi)
+    private CopyOnWriteArrayList<PrintWriter> connectedClients = new CopyOnWriteArrayList<>();
+
+    // Danh sách observer (cho BID realtime)
+    private CopyOnWriteArrayList<AuctionObserver> observers = new CopyOnWriteArrayList<>();
 
     private AuctionManager() {
         auctions = new ConcurrentHashMap<>();
@@ -29,22 +35,53 @@ public class AuctionManager {
         return instance;
     }
 
-//Hàm nghiệp vụ
+    // =========================
+    // QUẢN LÝ CLIENT KẾT NỐI
+    // =========================
+
+    // Khi ClientHandler mới kết nối → đăng ký vào đây
+    public void addClient(PrintWriter clientOut) {
+        if (clientOut != null) {
+            connectedClients.add(clientOut);
+            System.out.println("Client mới kết nối. Tổng: " + connectedClients.size());
+        }
+    }
+
+    // Khi client ngắt kết nối → xóa khỏi danh sách
+    public void removeClient(PrintWriter clientOut) {
+        connectedClients.remove(clientOut);
+        System.out.println("Client ngắt kết nối. Còn lại: " + connectedClients.size());
+    }
+
+    // Push JSON tới TẤT CẢ client đang kết nối
+    // Dùng khi có auction mới, hoặc có bid mới
+    public void notifyAllClients(String json) {
+        for (PrintWriter client : connectedClients) {
+            client.println(json);
+        }
+        System.out.println("Đã push tới " + connectedClients.size() + " client: " + json);
+    }
+
+    // =========================
+    // QUẢN LÝ AUCTION
+    // =========================
+
     public void addAuction(Auction auction) {
         if (auction != null && auction.getId() != null) {
             auctions.put(auction.getId(), auction);
         }
     }
-    // Hàm mới: cho phép đặt key tùy ý (ví dụ "SP01")
+
     public void addAuction(String key, Auction auction) {
         if (auction != null && key != null) {
             auctions.put(key, auction);
         }
     }
+
     public Auction findById(String auctionId) {
         return auctions.get(auctionId);
     }
-    //Chỉ lấy những phiên đang RUNNING
+
     public List<Auction> getActiveAuctions() {
         return auctions.values().stream()
                 .filter(a -> a.getStatus() == AuctionStatus.RUNNING)
@@ -55,19 +92,21 @@ public class AuctionManager {
         auctions.remove(auctionId);
     }
 
-    // 1. Cuốn sổ ghi danh sách những Client đang kết nối
-    // Dùng CopyOnWriteArrayList để chống lỗi Đa luồng khi có người thêm/xóa liên tục
-    private java.util.concurrent.CopyOnWriteArrayList<AuctionObserver> observers = new java.util.concurrent.CopyOnWriteArrayList<>();
+    // =========================
+    // OBSERVER (cho BID realtime)
+    // =========================
 
-    // 2. Hàm đăng ký nhận thông báo
     public void addObserver(AuctionObserver observer) {
         observers.add(observer);
     }
 
-    // 3. Hàm gọi khi có giá mới
+    public void removeObserver(AuctionObserver observer) {
+        observers.remove(observer);
+    }
+
     public void notifyObservers(Auction auction) {
         for (AuctionObserver obs : observers) {
-            obs.onNewBid(auction); // Báo cho từng người một
+            obs.onNewBid(auction);
         }
     }
 }
