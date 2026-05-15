@@ -17,7 +17,11 @@ public class SessionManager {
         return (username != null) ? username : "unknown";
     }
 
-    // --- BỔ SUNG HÀM NÀY ĐỂ HẾT LỖI ĐỎ ---
+    // THÊM MỚI: dùng trong Controller để ẩn/hiện nút Admin
+    public static boolean isAdmin() {
+        return "ADMIN".equals(role);
+    }
+
     public static void logout() {
         role = null;
         username = null;

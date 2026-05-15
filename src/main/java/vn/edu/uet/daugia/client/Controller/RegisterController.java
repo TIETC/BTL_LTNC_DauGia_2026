@@ -77,7 +77,7 @@ public class RegisterController {
             try {
                 // Giữ nguyên logic RegisterMessage của bạn (Bổ sung role vào nếu class RegisterMessage có hỗ trợ)
                 // Nếu class RegisterMessage chưa có trường Role, bạn hãy bảo người làm shared model thêm vào nhé
-                RegisterMessage register = new RegisterMessage("REGISTER", username, password);
+                RegisterMessage register = new RegisterMessage("REGISTER", username, password, role);
 
                 Gson gson = new Gson();
                 // Gửi thêm role kèm theo nếu cần thiết (ví dụ dùng JSON tùy chỉnh)

@@ -13,11 +13,11 @@ public class AuctionClient extends Application {
     // =========================
     // CONFIG
     // =========================
-    public static final String SERVER_IP = "10.11.6.187";
+    public static final String SERVER_IP = "10.11.200.107";
     public static final int SERVER_PORT = 5000;
 
     // =========================
-    // ĐIỂM KHỞI ĐỘNG JAVAFX
+    //    // ĐIỂM KHỞI ĐỘNG JAVAFX
     // =========================
     @Override
     public void start(Stage stage) {
@@ -36,9 +36,9 @@ public class AuctionClient extends Application {
     // =========================
     // REGISTER — dùng kết nối chung
     // =========================
-    public static void sendRegister(String username, String password) {
+    public static void sendRegister(String username, String password, String role) {
         try {
-            RegisterMessage register = new RegisterMessage("REGISTER", username, password);
+            RegisterMessage register = new RegisterMessage("REGISTER", username, password, role);
             Gson gson = new Gson();
             String json = gson.toJson(register);
 

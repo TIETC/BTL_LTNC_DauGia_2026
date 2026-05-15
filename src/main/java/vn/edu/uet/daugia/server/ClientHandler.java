@@ -90,10 +90,11 @@ public class ClientHandler implements Runnable, AuctionObserver {
                             out.println("REGISTER_FAILED:USERNAME_EXISTS");
                             System.out.println("Username đã tồn tại: " + register.getUsername());
                         } else {
-                            String sql = "INSERT INTO users(username, password) VALUES (?, ?)";
+                            String sql = "INSERT INTO users(username, password, role) VALUES (?, ?, ?)";
                             PreparedStatement statement = connection.prepareStatement(sql);
                             statement.setString(1, register.getUsername());
                             statement.setString(2, register.getPassword());
+                            statement.setString(3, register.getRole());
                             statement.executeUpdate();
                             out.println("REGISTER_SUCCESS");
                             System.out.println("Đã lưu user: " + register.getUsername());
@@ -123,8 +124,10 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     ResultSet resultSet = statement.executeQuery();
 
                     if (resultSet.next()) {
-                        out.println("LOGIN_SUCCESS");
-                        System.out.println("Đăng nhập thành công!");
+                        String role = resultSet.getString("role");
+                        if (role == null || role.isEmpty()) role = "BIDDER";
+                        out.println("LOGIN_SUCCESS:" + role);
+                        System.out.println("Đăng nhập thành công! Role: " + role);
                     } else {
                         out.println("LOGIN_FAILED");
                         System.out.println("Sai tài khoản hoặc mật khẩu!");
