@@ -28,14 +28,24 @@ public class NetworkClient {
     public void connect(String serverAddress, int port) {
         try {
             System.out.println("Đang tìm kiếm Máy chủ ở cổng " + port + "...");
-            socket = new Socket(serverAddress, port);
+
+            socket = new Socket();
+            // Timeout 5 giây khi kết nối — không treo mãi nếu Server không có
+            socket.connect(new java.net.InetSocketAddress(serverAddress, port), 5000);
 
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+            // Timeout 10 giây khi đọc — không treo mãi nếu Server không phản hồi
+            socket.setSoTimeout(10000);
+
             System.out.println("Đã kết nối thành công tới Máy chủ Đấu giá!");
+        } catch (java.net.SocketTimeoutException e) {
+            System.err.println("Hết thời gian kết nối! Server không phản hồi sau 5 giây.");
+            socket = null; out = null; in = null;
         } catch (Exception e) {
-            System.err.println("Không thể kết nối! Cửa Server đang đóng hoặc Server chưa bật.");
+            System.err.println("Không thể kết nối! Lỗi: " + e.getMessage());
+            socket = null; out = null; in = null;
         }
     }
 
@@ -50,9 +60,7 @@ public class NetworkClient {
         }
     }
 
-    // THÊM MỚI: gửi bất kỳ JSON thô nào lên Server
-    // Dùng cho CREATE_AUCTION, GET_AUCTIONS, và các lệnh khác sau này
-    // Khác sendBidMessage ở chỗ: hàm này nhận thẳng chuỗi JSON, không cần tạo object
+    // Gửi JSON thô lên Server
     public void sendRaw(String json) {
         if (out != null) {
             out.println(json);
@@ -62,18 +70,22 @@ public class NetworkClient {
         }
     }
 
-    // THÊM MỚI: đọc phản hồi từ Server sau khi gửi lệnh
-    // Dùng khi cần biết Server xử lý thành công hay thất bại
-    // Ví dụ: sau CREATE_AUCTION, đọc về {"status":"OK"} hay {"status":"ERROR"}
+    // Đọc phản hồi từ Server — tự động báo lỗi sau 10 giây nếu không có phản hồi
     public String readResponse() {
         try {
             if (in != null) {
-                return in.readLine(); // đọc 1 dòng phản hồi từ Server
+                return in.readLine();
+            } else {
+                System.err.println("Lỗi: Chưa kết nối, không thể đọc phản hồi!");
+                return null;
             }
+        } catch (java.net.SocketTimeoutException e) {
+            System.err.println("Hết thời gian chờ phản hồi từ Server (10 giây)!");
+            return null;
         } catch (Exception e) {
-            System.err.println("Lỗi đọc phản hồi từ Server: " + e.getMessage());
+            System.err.println("Lỗi đọc phản hồi: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     public Socket getSocket() {
