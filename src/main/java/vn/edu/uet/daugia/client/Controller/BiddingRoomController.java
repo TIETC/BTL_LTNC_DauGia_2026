@@ -16,23 +16,37 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
 import com.google.gson.JsonObject;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class BiddingRoomController {
 
+    // ===== FXML CŨ (GIỮ NGUYÊN) =====
     @FXML private Label lblName, lblId, lblSession, lblDescription, lblCurrentPrice, lblTimer;
     @FXML private TextField txtBidAmount;
     @FXML private Button btnBid;
-    @FXML private LineChart<Number, Number> priceChart;
 
-    private XYChart.Series<Number, Number> priceSeries;
-    private int bidCount = 0;
+    // ===== FXML MỚI =====
+    @FXML private LineChart<String, Number> priceChart;   // đổi kiểu sang <String, Number>
+    @FXML private ImageView productImageView;              // hiển thị ảnh sản phẩm
+    @FXML private Label lblStartPrice;                    // giá khởi điểm
+    @FXML private Label lblMaxPrice;                      // giá mua đứt
+
+    // ===== BIẾN NỘI BỘ =====
+    private XYChart.Series<String, Number> priceSeries;   // đổi kiểu theo chart
     private Product product;
     private Timeline timeline;
+    private static final DateTimeFormatter TIME_FMT =
+            DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    // ===== ENTRY POINTS (GIỮ NGUYÊN CẢ 2 HÀM) =====
 
     // Dùng khi AuctionList truyền Product sang (click đúp)
     public void setAuctionData(Product product) {
@@ -46,38 +60,114 @@ public class BiddingRoomController {
         setupUI();
     }
 
+    // ===== SETUP UI =====
+
     private void setupUI() {
         if (product == null) return;
 
+        // --- Thông tin cũ (GIỮ NGUYÊN) ---
         lblName.setText(product.getName());
         lblId.setText("Mã SP: " + product.getId());
         lblSession.setText("Phiên: " + product.getSession());
         lblDescription.setText("Mô tả: " + product.getDescription());
         lblCurrentPrice.setText(String.format("%,.0f VNĐ", product.getCurrentPrice()));
 
+        // --- MỚI: Hiển thị giá khởi điểm ---
+        lblStartPrice.setText(String.format("%,.0f VNĐ", product.getStartPrice()));
+
+        // --- MỚI: Hiển thị giá mua đứt ---
+        if (product.getMaxPrice() > 0) {
+            lblMaxPrice.setText(String.format("%,.0f VNĐ", product.getMaxPrice()));
+        } else {
+            lblMaxPrice.setText("Không giới hạn");
+        }
+
+        // --- MỚI: Load ảnh sản phẩm bất đồng bộ ---
+        loadProductImage(product.getImageUrl());
+
+        // --- Cũ (GIỮ NGUYÊN) ---
         setupChart();
 
         if (timeline != null) timeline.stop();
         startCountdown();
 
-        // Đăng ký nhận push NEW_BID từ Server
-        // Khi Bidder khác đặt giá → giá tự cập nhật trên màn hình mình
+        // --- MỚI: Gửi SUBSCRIBE lên Server trước khi lắng nghe ---
+        sendSubscribe();
+
+        // --- Đăng ký nhận push từ Server (logic cũ, cập nhật chart mới) ---
+        registerSocketListener();
+    }
+
+    // ===== MỚI: LOAD ẢNH =====
+
+    private void loadProductImage(String rawUrl) {
+        if (rawUrl == null || rawUrl.trim().isEmpty()) return;
+        try {
+            String directUrl = convertDriveUrl(rawUrl);
+            // true = load bất đồng bộ, không đơ UI
+            Image image = new Image(directUrl, true);
+            productImageView.setImage(image);
+        } catch (Exception e) {
+            System.err.println("Không load được ảnh: " + e.getMessage());
+        }
+    }
+
+    // Chuyển link Drive dạng /view → dạng download thẳng
+    private String convertDriveUrl(String rawUrl) {
+        if (rawUrl != null && rawUrl.contains("drive.google.com/file/d/")) {
+            String id = rawUrl.replaceAll(
+                    ".*drive\\.google\\.com/file/d/([^/]+).*", "$1");
+            return "https://drive.google.com/uc?export=download&id=" + id;
+        }
+        return rawUrl; // đã là link thường thì trả nguyên
+    }
+
+    // ===== SETUP CHART (SỬA: dùng String label thay Number) =====
+
+    private void setupChart() {
+        if (priceSeries == null) {
+            priceSeries = new XYChart.Series<>();
+            priceSeries.setName("Diễn biến giá");
+            priceChart.getData().add(priceSeries);
+            // Điểm đầu tiên = giá khởi điểm tại thời điểm vào phòng
+            String initLabel = LocalTime.now().format(TIME_FMT);
+            priceSeries.getData().add(
+                    new XYChart.Data<>(initLabel, product.getStartPrice()));
+        }
+    }
+
+    // Hàm cập nhật chart động - gọi mỗi khi có giá mới
+    public void updateChart(String timeLabel, double newPrice) {
+        Platform.runLater(() -> {
+            priceSeries.getData().add(new XYChart.Data<>(timeLabel, newPrice));
+            // Giới hạn 10 điểm gần nhất cho đồ thị gọn
+            if (priceSeries.getData().size() > 10) {
+                priceSeries.getData().remove(0);
+            }
+        });
+    }
+
+    // ===== LẮNG NGHE SOCKET (tách ra hàm riêng, logic cũ giữ nguyên + chart mới) =====
+
+    private void registerSocketListener() {
         NetworkClient.getInstance().setPushListener((type, json) -> {
             if ("NEW_BID".equals(type)) {
                 try {
                     JsonObject data = json.getAsJsonObject("data");
                     String auctionId = data.get("id").getAsString();
 
-                    // Chỉ cập nhật nếu là auction đang xem
+                    // Chỉ cập nhật nếu là auction đang xem (GIỮ NGUYÊN)
                     if (!auctionId.equals(product.getId())) return;
 
                     double newPrice = data.get("currentPrice").getAsDouble();
                     String leader   = data.get("currentLeader").getAsString();
+                    String timeLabel = LocalTime.now().format(TIME_FMT);
 
                     Platform.runLater(() -> {
                         product.setCurrentPrice(newPrice);
-                        lblCurrentPrice.setText(String.format("%,.0f VNĐ", newPrice));
-                        priceSeries.getData().add(new XYChart.Data<>(bidCount++, newPrice));
+                        lblCurrentPrice.setText(
+                                String.format("%,.0f VNĐ", newPrice));
+                        updateChart(timeLabel, newPrice); // SỬA: dùng hàm mới
                         System.out.println("✅ Giá mới từ " + leader + ": " + newPrice);
                     });
                 } catch (Exception e) {
@@ -87,14 +177,7 @@ public class BiddingRoomController {
         });
     }
 
-    private void setupChart() {
-        if (priceSeries == null) {
-            priceSeries = new XYChart.Series<>();
-            priceSeries.setName("Diễn biến giá");
-            priceChart.getData().add(priceSeries);
-            priceSeries.getData().add(new XYChart.Data<>(bidCount++, product.getStartPrice()));
-        }
-    }
+    // ===== COUNTDOWN (GIỮ NGUYÊN HOÀN TOÀN) =====
 
     private void startCountdown() {
         timeline = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
@@ -109,15 +192,18 @@ public class BiddingRoomController {
                 timeline.stop();
                 AlertUtil.showSuccess("Kết thúc", "Phiên đấu giá đã kết thúc!");
             } else {
-                long hours   = diff.toHours();
-                int minutes  = diff.toMinutesPart();
-                int seconds  = diff.toSecondsPart();
-                lblTimer.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
+                long hours  = diff.toHours();
+                int minutes = diff.toMinutesPart();
+                int seconds = diff.toSecondsPart();
+                lblTimer.setText(
+                        String.format("%02d:%02d:%02d", hours, minutes, seconds));
             }
         }));
         timeline.setCycleCount(Timeline.INDEFINITE);
         timeline.play();
     }
+
+    // ===== XỬ LÝ ĐẶT GIÁ (GIỮ NGUYÊN LOGIC, chỉ sửa dòng add chart) =====
 
     @FXML
     private void handleBid() {
@@ -132,24 +218,24 @@ public class BiddingRoomController {
             }
 
             double newPrice = product.getCurrentPrice() + increment;
-            String bidderId = SessionManager.getUsername(); // dùng username đang đăng nhập
+            String bidderId = SessionManager.getUsername();
 
-            // Gửi BID lên Server trong thread riêng
             new Thread(() -> {
                 try {
-                    BidMessage bidMsg = new BidMessage("BID", product.getId(), bidderId, newPrice);
+                    BidMessage bidMsg = new BidMessage(
+                            "BID", product.getId(), bidderId, newPrice);
                     NetworkClient.getInstance().sendBidMessage(bidMsg);
 
-                    // Đọc phản hồi từ Server
                     String response = NetworkClient.getInstance().readResponse();
                     System.out.println("Server phản hồi BID: " + response);
 
                     Platform.runLater(() -> {
                         if (response != null && response.contains("\"status\":\"OK\"")) {
-                            // Cập nhật UI sau khi Server xác nhận
                             product.setCurrentPrice(newPrice);
-                            lblCurrentPrice.setText(String.format("%,.0f VNĐ", newPrice));
-                            priceSeries.getData().add(new XYChart.Data<>(bidCount++, newPrice));
+                            lblCurrentPrice.setText(
+                                    String.format("%,.0f VNĐ", newPrice));
+                            // SỬA: dùng updateChart với nhãn thời gian
+                            updateChart(LocalTime.now().format(TIME_FMT), newPrice);
                             txtBidAmount.clear();
                         } else {
                             AlertUtil.showError("Lỗi", "Đặt giá thất bại: " + response);
@@ -158,7 +244,8 @@ public class BiddingRoomController {
 
                 } catch (Exception e) {
                     Platform.runLater(() ->
-                            AlertUtil.showError("Lỗi hệ thống", "Không thể gửi lượt đấu giá!"));
+                            AlertUtil.showError("Lỗi hệ thống",
+                                    "Không thể gửi lượt đấu giá!"));
                 }
             }).start();
 
@@ -167,9 +254,12 @@ public class BiddingRoomController {
         }
     }
 
+    // ===== ĐIỀU HƯỚNG (GIỮ NGUYÊN + thêm UNSUBSCRIBE) =====
+
     @FXML
     private void handleBackToList() {
         if (timeline != null) timeline.stop();
+        sendUnsubscribe(); // MỚI: báo Server xóa khỏi danh sách Observer
         NetworkClient.getInstance().clearPushListener();
         SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
     }
@@ -177,9 +267,40 @@ public class BiddingRoomController {
     @FXML
     private void handleBackToDetail() {
         if (timeline != null) timeline.stop();
+        sendUnsubscribe(); // MỚI
         NetworkClient.getInstance().clearPushListener();
         ProductDetailController controller = SceneManager.switchSceneAndGetController(
                 "/view/ProductDetail.fxml", "Chi tiết sản phẩm");
         if (controller != null) controller.setProductData(this.product);
+    }
+
+    // ===== MỚI: SUBSCRIBE / UNSUBSCRIBE OBSERVER =====
+
+    private void sendSubscribe() {
+        new Thread(() -> {
+            try {
+                String json = String.format(
+                        "{\"action\":\"SUBSCRIBE_AUCTION\",\"roomId\":\"%s\",\"username\":\"%s\"}",
+                        product.getId(), SessionManager.getUsername());
+                NetworkClient.getInstance().sendRaw(json);
+                System.out.println("📡 SUBSCRIBE gửi cho phòng: " + product.getId());
+            } catch (Exception e) {
+                System.err.println("Lỗi SUBSCRIBE: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void sendUnsubscribe() {
+        new Thread(() -> {
+            try {
+                String json = String.format(
+                        "{\"action\":\"UNSUBSCRIBE_AUCTION\",\"roomId\":\"%s\",\"username\":\"%s\"}",
+                        product.getId(), SessionManager.getUsername());
+                NetworkClient.getInstance().sendRaw(json);
+                System.out.println("🔕 UNSUBSCRIBE khỏi phòng: " + product.getId());
+            } catch (Exception e) {
+                System.err.println("Lỗi UNSUBSCRIBE: " + e.getMessage());
+            }
+        }).start();
     }
 }
