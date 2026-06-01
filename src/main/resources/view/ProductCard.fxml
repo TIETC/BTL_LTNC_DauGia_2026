@@ -9,6 +9,12 @@
 <!--
     File này là template cho 1 thẻ sản phẩm.
     ProductCardController sẽ nạp dữ liệu vào các fx:id tương ứng.
+
+    FIX 1: Thêm VBox fx:id="vboxPlaceholder" bao quanh imgProduct + lblNoImage
+           → Controller dùng vboxPlaceholder.setVisible() để toggle ảnh / placeholder
+           → Trước đây thiếu tag này gây NullPointerException → ảnh không bao giờ hiện
+
+    FIX 2: Thêm nút Chi tiết (fx:id="btnDetail") ở trên nút Tham gia đấu giá
 -->
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -26,19 +32,29 @@
     <StackPane prefHeight="160.0"
                style="-fx-background-color: #f8f9fa;
                       -fx-background-radius: 12 12 0 0;">
-        <!-- Ảnh sản phẩm: load bất đồng bộ, căn giữa -->
+
+        <!--
+            FIX ẢNH: VBox này là "vboxPlaceholder" - Controller dùng để toggle.
+            Khi ảnh load xong: vboxPlaceholder ẩn đi, imgProduct hiện lên.
+            Khi không có ảnh / lỗi: imgProduct ẩn, vboxPlaceholder hiện placeholder text.
+        -->
+        <VBox fx:id="vboxPlaceholder"
+              alignment="CENTER"
+              prefWidth="200.0"
+              prefHeight="150.0">
+            <Label fx:id="lblNoImage"
+                   text="📷 Chưa có ảnh"
+                   style="-fx-text-fill: #bdc3c7; -fx-font-size: 11px;"/>
+        </VBox>
+
+        <!-- Ảnh sản phẩm: mặc định ẩn, hiện khi load xong -->
         <ImageView fx:id="imgProduct"
                    fitWidth="200.0"
                    fitHeight="150.0"
                    preserveRatio="true"
                    pickOnBounds="true"
-                   smooth="true"/>
-
-        <!-- Placeholder text khi chưa có ảnh -->
-        <Label fx:id="lblNoImage"
-               text="📷 Chưa có ảnh"
-               style="-fx-text-fill: #bdc3c7; -fx-font-size: 11px;"
-               visible="false"/>
+                   smooth="true"
+                   visible="false"/>
     </StackPane>
 
     <!-- ===== ĐƯỜNG KẺ PHÂN CÁCH ===== -->
@@ -113,8 +129,24 @@
     <!-- SPACER đẩy nút xuống dưới -->
     <Region VBox.vgrow="ALWAYS"/>
 
-    <!-- ===== NÚT THAM GIA ===== -->
-    <VBox style="-fx-padding: 0 14 14 14;">
+    <!-- ===== KHU VỰC NÚT ===== -->
+    <VBox spacing="8.0" style="-fx-padding: 0 14 14 14;">
+
+        <!-- NÚT MỚI: Chi tiết sản phẩm (ở trên nút Tham gia) -->
+        <Button fx:id="btnDetail"
+                onAction="#handleDetail"
+                text="🔍  Chi tiết sản phẩm"
+                prefWidth="195.0"
+                prefHeight="32.0"
+                style="-fx-background-color: #2980b9;
+                       -fx-text-fill: white;
+                       -fx-font-weight: bold;
+                       -fx-font-size: 11px;
+                       -fx-background-radius: 8;
+                       -fx-cursor: hand;">
+        </Button>
+
+        <!-- NÚT CŨ: Tham gia đấu giá -->
         <Button fx:id="btnJoin"
                 onAction="#handleJoin"
                 text="🔨  THAM GIA ĐẤU GIÁ"
