@@ -174,24 +174,36 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     }
                 }
 
-                // =========================
-                // BID (GIỮ NGUYÊN)
+
+                // BID
                 // =========================
                 if (type.equals("BID")) {
                     String auctionId = jsonObject.get("auctionId").getAsString();
                     String bidderId  = jsonObject.get("bidderId").getAsString();
                     double price     = jsonObject.get("price").getAsDouble();
 
-                    Connection connection = DatabaseConnection.getConnection();
-                    String sql = "INSERT INTO bids(auctionId, bidderId, price) VALUES (?, ?, ?)";
-                    PreparedStatement statement = connection.prepareStatement(sql);
-                    statement.setString(1, auctionId);
-                    statement.setString(2, bidderId);
-                    statement.setDouble(3, price);
-                    statement.executeUpdate();
-                    System.out.println("Đã lưu bid vào database!");
-
+                    // BƯỚC 1: Gọi Service để chạy qua ReentrantLock kiểm tra tính hợp lệ TRƯỚC
                     String responseJson = auctionService.handlePlaceBid(auctionId, bidderId, price);
+
+                    // BƯỚC 2: Chỉ lưu vào DB nếu logic trên RAM trả về trạng thái OK
+                    if (responseJson.contains("\"status\":\"OK\"")) {
+                        try {
+                            Connection connection = DatabaseConnection.getConnection();
+                            String sql = "INSERT INTO bids(auctionId, bidderId, price) VALUES (?, ?, ?)";
+                            PreparedStatement statement = connection.prepareStatement(sql);
+                            statement.setString(1, auctionId);
+                            statement.setString(2, bidderId);
+                            statement.setDouble(3, price);
+                            statement.executeUpdate();
+                            System.out.println("Đã lưu bid hợp lệ vào database!");
+                        } catch (Exception e) {
+                            System.err.println("Lỗi lưu DB: " + e.getMessage());
+                        }
+                    } else {
+                        System.out.println("Bid không hợp lệ, từ chối lưu vào DB!");
+                    }
+
+                    // BƯỚC 3: Trả kết quả về cho Client
                     out.println(responseJson);
                 }
 
