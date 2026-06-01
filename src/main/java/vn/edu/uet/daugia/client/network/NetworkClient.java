@@ -19,13 +19,9 @@ public class NetworkClient {
     private BufferedReader in;
     private Gson gson;
 
-    // Hàng đợi cho phản hồi 1 lần (LOGIN, REGISTER, GET_AUCTIONS...)
     private BlockingQueue<String> responseQueue = new LinkedBlockingQueue<>();
-
-    // Listener nhận push realtime (NEW_AUCTION, NEW_BID...)
     private PushListener pushListener;
 
-    // Interface để Controller đăng ký nhận push
     public interface PushListener {
         void onPush(String type, JsonObject data);
     }
@@ -51,8 +47,6 @@ public class NetworkClient {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             System.out.println("Đã kết nối thành công tới Máy chủ Đấu giá!");
-
-            // Khởi động 1 thread duy nhất đọc tất cả tin nhắn từ Server
             startReaderThread();
 
         } catch (java.net.SocketTimeoutException e) {
@@ -64,7 +58,6 @@ public class NetworkClient {
         }
     }
 
-    // Thread duy nhất đọc tất cả tin từ Server và phân loại
     private void startReaderThread() {
         new Thread(() -> {
             try {
@@ -72,7 +65,6 @@ public class NetworkClient {
                 while ((line = in.readLine()) != null) {
                     System.out.println("Nhận từ Server: " + line);
 
-                    // Kiểm tra có phải push không (có "type" và là NEW_AUCTION, NEW_BID...)
                     boolean isPush = false;
                     try {
                         JsonObject json = gson.fromJson(line, JsonObject.class);
@@ -80,7 +72,6 @@ public class NetworkClient {
                             String type = json.get("type").getAsString();
                             if (type.equals("NEW_AUCTION") || type.equals("NEW_BID")) {
                                 isPush = true;
-                                // Gửi tới PushListener (Controller đang lắng nghe)
                                 if (pushListener != null) {
                                     pushListener.onPush(type, json);
                                 }
@@ -88,7 +79,6 @@ public class NetworkClient {
                         }
                     } catch (Exception ignored) {}
 
-                    // Nếu không phải push → là phản hồi thông thường → bỏ vào hàng đợi
                     if (!isPush) {
                         responseQueue.put(line);
                     }
@@ -99,17 +89,14 @@ public class NetworkClient {
         }, "ServerReader").start();
     }
 
-    // Đăng ký nhận push realtime — Controller gọi hàm này trong initialize()
     public void setPushListener(PushListener listener) {
         this.pushListener = listener;
     }
 
-    // Xóa listener khi rời màn hình
     public void clearPushListener() {
         this.pushListener = null;
     }
 
-    // Gửi JSON thô lên Server
     public void sendRaw(String json) {
         if (out != null) {
             out.println(json);
@@ -119,7 +106,6 @@ public class NetworkClient {
         }
     }
 
-    // Đọc phản hồi — chờ tối đa 10 giây
     public String readResponse() {
         try {
             return responseQueue.poll(10, java.util.concurrent.TimeUnit.SECONDS);
@@ -128,7 +114,6 @@ public class NetworkClient {
         }
     }
 
-    // Hàm cũ giữ nguyên
     public void sendBidMessage(BidMessage bid) {
         if (out != null) {
             String json = gson.toJson(bid);

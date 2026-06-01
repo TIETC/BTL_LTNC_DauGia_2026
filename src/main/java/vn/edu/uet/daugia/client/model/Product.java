@@ -1,6 +1,8 @@
 package vn.edu.uet.daugia.client.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Product {
     private String id;
@@ -13,6 +15,11 @@ public class Product {
     private String imageUrl;       // MỚI: Link ảnh Google Drive
     private LocalDateTime endTime;
     private LocalDateTime startTime;
+
+    // ==========================================
+    // === BỔ SUNG MỚI: LỊCH SỬ TĂNG GIÁ ===
+    // ==========================================
+    private List<String> bidHistory = new ArrayList<>();
 
     // Constructor MỚI (đầy đủ 10 tham số) - dùng cho SellerDashboard khi có maxPrice + imageUrl
     public Product(String id, String name, String session,
@@ -52,6 +59,12 @@ public class Product {
     // ---- Getters MỚI ----
     public double getMaxPrice()  { return maxPrice; }
     public String getImageUrl()  { return imageUrl; }
+
+    // ==========================================
+    // === BỔ SUNG MỚI: GETTER/SETTER LỊCH SỬ ===
+    // ==========================================
+    public List<String> getBidHistory() { return bidHistory; }
+    public void addBidHistory(String log) { this.bidHistory.add(log); }
 
     // ---- Setters - GIỮ NGUYÊN + THÊM MỚI ----
     public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
