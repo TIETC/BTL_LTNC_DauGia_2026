@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.shape.Rectangle?>
+
+<!--
+    File này là template cho 1 thẻ sản phẩm.
+    ProductCardController sẽ nạp dữ liệu vào các fx:id tương ứng.
+-->
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="vn.edu.uet.daugia.client.Controller.ProductCardController"
+      prefWidth="220.0"
+      spacing="0"
+      style="-fx-background-color: white;
+             -fx-background-radius: 12;
+             -fx-border-color: #e8ecf0;
+             -fx-border-width: 1;
+             -fx-border-radius: 12;
+             -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 8, 0, 0, 2);">
+
+    <!-- ===== KHU VỰC ẢNH ===== -->
+    <StackPane prefHeight="160.0"
+               style="-fx-background-color: #f8f9fa;
+                      -fx-background-radius: 12 12 0 0;">
+        <!-- Ảnh sản phẩm: load bất đồng bộ, căn giữa -->
+        <ImageView fx:id="imgProduct"
+                   fitWidth="200.0"
+                   fitHeight="150.0"
+                   preserveRatio="true"
+                   pickOnBounds="true"
+                   smooth="true"/>
+
+        <!-- Placeholder text khi chưa có ảnh -->
+        <Label fx:id="lblNoImage"
+               text="📷 Chưa có ảnh"
+               style="-fx-text-fill: #bdc3c7; -fx-font-size: 11px;"
+               visible="false"/>
+    </StackPane>
+
+    <!-- ===== ĐƯỜNG KẺ PHÂN CÁCH ===== -->
+    <Separator style="-fx-background-color: #f0f0f0;" />
+
+    <!-- ===== THÔNG TIN SẢN PHẨM ===== -->
+    <VBox spacing="6.0" style="-fx-padding: 12 14 10 14;">
+
+        <!-- Tên sản phẩm (tối đa 2 dòng) -->
+        <Label fx:id="lblName"
+               text="Tên sản phẩm"
+               wrapText="true"
+               maxHeight="42.0"
+               maxWidth="195.0"
+               style="-fx-font-weight: bold;
+                      -fx-font-size: 13px;
+                      -fx-text-fill: #2c3e50;">
+        </Label>
+
+        <!-- Mã SP + Phiên (cùng 1 dòng) -->
+        <HBox spacing="8.0" alignment="CENTER_LEFT">
+            <Label fx:id="lblId"
+                   text="Mã: ---"
+                   style="-fx-font-size: 11px;
+                          -fx-text-fill: #7f8c8d;
+                          -fx-background-color: #ecf0f1;
+                          -fx-background-radius: 4;
+                          -fx-padding: 2 6 2 6;"/>
+            <Label fx:id="lblSession"
+                   text="---"
+                   style="-fx-font-size: 11px;
+                          -fx-text-fill: #2980b9;
+                          -fx-background-color: #ebf5fb;
+                          -fx-background-radius: 4;
+                          -fx-padding: 2 6 2 6;"/>
+        </HBox>
+
+        <!-- Giá khởi điểm -->
+        <HBox spacing="5.0" alignment="CENTER_LEFT">
+            <Label text="Khởi điểm:"
+                   style="-fx-font-size: 11px; -fx-text-fill: #95a5a6;"/>
+            <Label fx:id="lblStartPrice"
+                   text="0 VNĐ"
+                   style="-fx-font-size: 14px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #e74c3c;"/>
+        </HBox>
+
+        <!-- Giá max (hiện nếu > 0) -->
+        <HBox fx:id="hboxMaxPrice" spacing="5.0" alignment="CENTER_LEFT" visible="false" managed="false">
+            <Label text="Mua đứt:"
+                   style="-fx-font-size: 11px; -fx-text-fill: #95a5a6;"/>
+            <Label fx:id="lblMaxPrice"
+                   text=""
+                   style="-fx-font-size: 12px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #8e44ad;"/>
+        </HBox>
+
+        <!-- Thời gian còn lại -->
+        <HBox spacing="5.0" alignment="CENTER_LEFT">
+            <Label text="⏱"
+                   style="-fx-font-size: 11px;"/>
+            <Label fx:id="lblTimer"
+                   text="--:--:--"
+                   style="-fx-font-size: 12px;
+                          -fx-font-weight: bold;
+                          -fx-text-fill: #e67e22;"/>
+        </HBox>
+    </VBox>
+
+    <!-- SPACER đẩy nút xuống dưới -->
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <!-- ===== NÚT THAM GIA ===== -->
+    <VBox style="-fx-padding: 0 14 14 14;">
+        <Button fx:id="btnJoin"
+                onAction="#handleJoin"
+                text="🔨  THAM GIA ĐẤU GIÁ"
+                prefWidth="195.0"
+                prefHeight="36.0"
+                style="-fx-background-color: #e74c3c;
+                       -fx-text-fill: white;
+                       -fx-font-weight: bold;
+                       -fx-font-size: 12px;
+                       -fx-background-radius: 8;
+                       -fx-cursor: hand;">
+        </Button>
+    </VBox>
+</VBox>

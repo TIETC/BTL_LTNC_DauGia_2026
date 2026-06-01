@@ -1,48 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="TOP_CENTER" prefHeight="550.0" prefWidth="800.0" spacing="15.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.Controller.AuctionListController">
-    <children>
-        <HBox alignment="TOP_RIGHT" prefWidth="800.0" spacing="15.0">
-            <padding>
-                <Insets right="20.0" top="15.0" />
-            </padding>
-            <children>
-                <Button mnemonicParsing="false" onAction="#handleSwitchToSeller" style="-fx-background-color: #ffc107; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand;" text="Giao diện Seller" />
-                <Button mnemonicParsing="false" onAction="#handleLogout" style="-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" text="Đăng xuất" />
-            </children>
+<BorderPane prefHeight="700.0" prefWidth="1100.0"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="vn.edu.uet.daugia.client.Controller.AuctionListController"
+            style="-fx-background-color: #f0f2f5;">
+
+    <!-- ===== THANH TIÊU ĐỀ ===== -->
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0"
+              style="-fx-background-color: #c0392b; -fx-padding: 14 20 14 20;">
+            <Label text="🔨  HỆ THỐNG ĐẤU GIÁ TRỰC TUYẾN" textFill="WHITE">
+                <font><Font name="System Bold" size="20.0" /></font>
+            </Label>
+            <Region HBox.hgrow="ALWAYS"/>
+            <!-- Nút Seller (ẩn với Bidder - xử lý ở Controller) -->
+            <Button fx:id="btnSellerMode"
+                    onAction="#handleSwitchToSeller"
+                    text="📦  Kênh Người Bán"
+                    prefHeight="34.0"
+                    style="-fx-background-color: #f39c12;
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-background-radius: 6;
+                           -fx-cursor: hand;"/>
+            <Button onAction="#handleLogout"
+                    text="🚪  Đăng xuất"
+                    prefHeight="34.0"
+                    style="-fx-background-color: rgba(255,255,255,0.2);
+                           -fx-text-fill: white;
+                           -fx-font-weight: bold;
+                           -fx-background-radius: 6;
+                           -fx-cursor: hand;"/>
         </HBox>
+    </top>
 
-        <Label text="DANH SÁCH SẢN PHẨM ĐẤU GIÁ">
-            <font>
-                <Font name="System Bold" size="24.0" />
-            </font>
-        </Label>
+    <!-- ===== NỘI DUNG CHÍNH: LƯỚI THẺ SẢN PHẨM ===== -->
+    <center>
+        <VBox spacing="0">
+            <!-- Sub-header -->
+            <HBox alignment="CENTER_LEFT" spacing="10.0"
+                  style="-fx-background-color: white;
+                         -fx-padding: 12 20 12 20;
+                         -fx-border-color: #e8ecf0;
+                         -fx-border-width: 0 0 1 0;">
+                <Label text="Phiên đấu giá đang diễn ra"
+                       style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #2c3e50;"/>
+                <!-- Badge đếm số sản phẩm -->
+                <Label fx:id="lblCount"
+                       text="0 sản phẩm"
+                       style="-fx-background-color: #e74c3c;
+                              -fx-text-fill: white;
+                              -fx-font-size: 11px;
+                              -fx-font-weight: bold;
+                              -fx-background-radius: 10;
+                              -fx-padding: 2 8 2 8;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="💡 Click 'Tham gia' để vào phòng đấu giá"
+                       style="-fx-text-fill: #95a5a6; -fx-font-size: 11px;"/>
+            </HBox>
 
-        <TableView fx:id="tableView" prefHeight="400.0" prefWidth="750.0">
-            <columns>
-                <TableColumn fx:id="colId" prefWidth="120.0" text="Mã SP" />
-                <TableColumn fx:id="colName" prefWidth="250.0" text="Tên sản phẩm" />
-                <TableColumn fx:id="colSession" prefWidth="150.0" text="Phiên" />
-                <TableColumn fx:id="colStartPrice" prefWidth="200.0" text="Giá khởi điểm (VNĐ)" />
-            </columns>
-            <VBox.margin>
-                <Insets left="25.0" right="25.0" />
-            </VBox.margin>
-        </TableView>
+            <!-- ScrollPane chứa lưới thẻ -->
+            <ScrollPane fitToWidth="true"
+                        VBox.vgrow="ALWAYS"
+                        style="-fx-background-color: transparent;
+                               -fx-background: transparent;
+                               -fx-border-color: transparent;">
+                <content>
+                    <!-- TilePane: tự động xếp thẻ thành lưới, responsive -->
+                    <TilePane fx:id="productGrid"
+                              hgap="18.0"
+                              vgap="18.0"
+                              prefColumns="4"
+                              tileAlignment="TOP_LEFT"
+                              style="-fx-background-color: transparent;
+                                     -fx-padding: 20;">
+                    </TilePane>
+                </content>
+            </ScrollPane>
 
-        <Label text="* Nháy đúp chuột vào sản phẩm để xem chi tiết và đấu giá" textFill="#666666">
-            <font>
-                <Font name="System Italic" size="13.0" />
-            </font>
-        </Label>
-    </children>
-</VBox>
+            <!-- ===== PLACEHOLDER khi chưa có sản phẩm ===== -->
+            <VBox fx:id="vboxEmpty"
+                  alignment="CENTER"
+                  spacing="10.0"
+                  prefHeight="400.0"
+                  visible="false"
+                  managed="false"
+                  style="-fx-padding: 60;">
+                <Label text="🔍"
+                       style="-fx-font-size: 48px;"/>
+                <Label text="Chưa có phiên đấu giá nào đang diễn ra"
+                       style="-fx-font-size: 16px; -fx-text-fill: #bdc3c7; -fx-font-weight: bold;"/>
+                <Label text="Vui lòng quay lại sau"
+                       style="-fx-font-size: 12px; -fx-text-fill: #bdc3c7;"/>
+            </VBox>
+        </VBox>
+    </center>
+</BorderPane>

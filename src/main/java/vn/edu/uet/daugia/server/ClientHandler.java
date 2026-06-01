@@ -33,6 +33,8 @@ public class ClientHandler implements Runnable, AuctionObserver {
         AuctionManager.getInstance().addObserver(this);
     }
 
+    // ===== OBSERVER: Nhận thông báo khi có bid mới (GIỮ NGUYÊN) =====
+
     @Override
     public void onNewBid(Auction auction) {
         if (out != null) {
@@ -47,7 +49,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     new InputStreamReader(clientSocket.getInputStream()));
             out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            // Đăng ký client này vào AuctionManager để nhận push
+            // Đăng ký client này vào AuctionManager (GIỮ NGUYÊN)
             AuctionManager.getInstance().addClient(out);
 
             String json;
@@ -59,7 +61,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 String type = jsonObject.get("type").getAsString();
 
                 // =========================
-                // REGISTER
+                // REGISTER (GIỮ NGUYÊN)
                 // =========================
                 if (type.equals("REGISTER")) {
                     RegisterMessage register = gson.fromJson(json, RegisterMessage.class);
@@ -92,7 +94,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // LOGIN
+                // LOGIN (GIỮ NGUYÊN)
                 // =========================
                 if (type.equals("LOGIN")) {
                     LoginMessage login = gson.fromJson(json, LoginMessage.class);
@@ -115,30 +117,49 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // GET_AUCTIONS — Client mở AuctionList → load danh sách
+                // GET_AUCTIONS — SỬA: thêm imageUrl và maxPrice vào JSON trả về
                 // =========================
                 if (type.equals("GET_AUCTIONS")) {
                     try {
                         Connection connection = DatabaseConnection.getConnection();
+                        // SỬA: SELECT thêm cột image_url và max_price
                         String sql = "SELECT * FROM auctions WHERE status = 'RUNNING'";
                         PreparedStatement statement = connection.prepareStatement(sql);
                         ResultSet resultSet = statement.executeQuery();
 
-                        // Tạo JSON array để gửi về
                         StringBuilder sb = new StringBuilder("[");
                         boolean first = true;
                         while (resultSet.next()) {
                             if (!first) sb.append(",");
-                            String itemId    = resultSet.getString("id");
-                            String itemName  = resultSet.getString("itemName");
-                            String seller    = resultSet.getString("sellerName");
-                            double price     = resultSet.getDouble("startPrice");
-                            String endTime   = resultSet.getString("endTime");
+                            String itemId   = resultSet.getString("id");
+                            String itemName = resultSet.getString("itemName");
+                            String seller   = resultSet.getString("sellerName");
+                            double price    = resultSet.getDouble("startPrice");
+                            String endTime  = resultSet.getString("endTime");
 
+                            // MỚI: Lấy imageUrl và maxPrice từ DB
+                            // Dùng getObject để tránh crash nếu cột chưa có
+                            String imageUrl = "";
+                            try {
+                                Object imgObj = resultSet.getObject("image_url");
+                                if (imgObj != null) imageUrl = imgObj.toString();
+                            } catch (Exception ignored) {}
+
+                            double maxPrice = 0;
+                            try {
+                                Object maxObj = resultSet.getObject("max_price");
+                                if (maxObj != null) maxPrice = Double.parseDouble(maxObj.toString());
+                            } catch (Exception ignored) {}
+
+                            // MỚI: thêm imageUrl và maxPrice vào JSON
                             sb.append(String.format(
-                                    "{\"itemId\":\"%s\",\"itemName\":\"%s\",\"sellerName\":\"%s\"," +
-                                            "\"startPrice\":%.0f,\"endTime\":\"%s\"}",
-                                    itemId, itemName, seller, price, endTime
+                                    "{\"itemId\":\"%s\",\"itemName\":\"%s\"," +
+                                            "\"sellerName\":\"%s\",\"startPrice\":%.0f," +
+                                            "\"endTime\":\"%s\"," +
+                                            "\"imageUrl\":\"%s\"," +
+                                            "\"maxPrice\":%.0f}",
+                                    itemId, itemName, seller, price, endTime,
+                                    imageUrl, maxPrice
                             ));
                             first = false;
                         }
@@ -148,13 +169,13 @@ public class ClientHandler implements Runnable, AuctionObserver {
                         System.out.println("Đã gửi danh sách auction: " + sb);
 
                     } catch (Exception e) {
-                        out.println("[]"); // trả về mảng rỗng nếu lỗi
+                        out.println("[]");
                         System.out.println("Lỗi GET_AUCTIONS: " + e.getMessage());
                     }
                 }
 
                 // =========================
-                // BID
+                // BID (GIỮ NGUYÊN)
                 // =========================
                 if (type.equals("BID")) {
                     String auctionId = jsonObject.get("auctionId").getAsString();
@@ -175,7 +196,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // CREATE_AUCTION
+                // CREATE_AUCTION — SỬA: đọc và lưu imageUrl, maxPrice
                 // =========================
                 if (type.equals("CREATE_AUCTION")) {
                     String itemId       = jsonObject.get("itemId").getAsString();
@@ -184,6 +205,20 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     double startPrice   = jsonObject.get("startPrice").getAsDouble();
                     String sellerName   = jsonObject.get("sellerName").getAsString();
                     int durationMinutes = jsonObject.get("durationMinutes").getAsInt();
+
+                    // MỚI: Đọc imageUrl (tùy chọn, mặc định "")
+                    String imageUrl = "";
+                    if (jsonObject.has("imageUrl")
+                            && !jsonObject.get("imageUrl").isJsonNull()) {
+                        imageUrl = jsonObject.get("imageUrl").getAsString();
+                    }
+
+                    // MỚI: Đọc maxPrice (tùy chọn, mặc định 0)
+                    double maxPrice = 0;
+                    if (jsonObject.has("maxPrice")
+                            && !jsonObject.get("maxPrice").isJsonNull()) {
+                        maxPrice = jsonObject.get("maxPrice").getAsDouble();
+                    }
 
                     System.out.println("Đang tạo phiên đấu giá: " + itemId + " - " + itemName);
 
@@ -199,34 +234,61 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     auction.startAuction();
                     AuctionManager.getInstance().addAuction(itemId, auction);
 
-                    // Lưu DB
-                    Connection connection = DatabaseConnection.getConnection();
-                    String sql = "INSERT INTO auctions(id, itemName, sellerName, startPrice, endTime, status) " +
-                            "VALUES (?, ?, ?, ?, ?, 'RUNNING')";
-                    PreparedStatement statement = connection.prepareStatement(sql);
-                    statement.setString(1, itemId);
-                    statement.setString(2, itemName);
-                    statement.setString(3, sellerName);
-                    statement.setDouble(4, startPrice);
-                    statement.setString(5, endTime.toString());
-                    statement.executeUpdate();
+                    // SỬA: Lưu DB thêm cột image_url và max_price
+                    // (Cần chạy câu ALTER TABLE bên dưới trước nếu cột chưa tồn tại)
+                    try {
+                        Connection connection = DatabaseConnection.getConnection();
+                        String sql =
+                                "INSERT INTO auctions(id, itemName, sellerName, startPrice, " +
+                                        "endTime, status, image_url, max_price) " +
+                                        "VALUES (?, ?, ?, ?, ?, 'RUNNING', ?, ?)";
+                        PreparedStatement statement = connection.prepareStatement(sql);
+                        statement.setString(1, itemId);
+                        statement.setString(2, itemName);
+                        statement.setString(3, sellerName);
+                        statement.setDouble(4, startPrice);
+                        statement.setString(5, endTime.toString());
+                        statement.setString(6, imageUrl);   // MỚI
+                        statement.setDouble(7, maxPrice);   // MỚI
+                        statement.executeUpdate();
+                    } catch (Exception dbEx) {
+                        // Nếu cột chưa có (chưa ALTER TABLE) → fallback INSERT cũ
+                        System.err.println("[WARN] Chưa có cột image_url/max_price, dùng INSERT cũ: "
+                                + dbEx.getMessage());
+                        Connection connection = DatabaseConnection.getConnection();
+                        String sqlFallback =
+                                "INSERT INTO auctions(id, itemName, sellerName, startPrice, endTime, status) " +
+                                        "VALUES (?, ?, ?, ?, ?, 'RUNNING')";
+                        PreparedStatement stmtFallback = connection.prepareStatement(sqlFallback);
+                        stmtFallback.setString(1, itemId);
+                        stmtFallback.setString(2, itemName);
+                        stmtFallback.setString(3, sellerName);
+                        stmtFallback.setDouble(4, startPrice);
+                        stmtFallback.setString(5, endTime.toString());
+                        stmtFallback.executeUpdate();
+                    }
 
                     System.out.println("✅ Đã tạo phiên: " + itemId);
 
-                    // Phản hồi cho Seller
+                    // Phản hồi cho Seller (GIỮ NGUYÊN)
                     out.println("{\"status\":\"OK\",\"message\":\"Tạo phiên đấu giá thành công\"}");
 
-                    // Push NEW_AUCTION tới TẤT CẢ client đang kết nối (Bidder tự cập nhật)
+                    // Push NEW_AUCTION tới TẤT CẢ client — SỬA: thêm imageUrl, maxPrice
                     String pushJson = String.format(
-                            "{\"type\":\"NEW_AUCTION\",\"itemId\":\"%s\",\"itemName\":\"%s\"," +
-                                    "\"sellerName\":\"%s\",\"startPrice\":%.0f,\"endTime\":\"%s\"}",
-                            itemId, itemName, sellerName, startPrice, endTime.toString()
+                            "{\"type\":\"NEW_AUCTION\"," +
+                                    "\"itemId\":\"%s\",\"itemName\":\"%s\"," +
+                                    "\"sellerName\":\"%s\",\"startPrice\":%.0f," +
+                                    "\"endTime\":\"%s\"," +
+                                    "\"imageUrl\":\"%s\"," +
+                                    "\"maxPrice\":%.0f}",
+                            itemId, itemName, sellerName, startPrice,
+                            endTime.toString(), imageUrl, maxPrice
                     );
                     AuctionManager.getInstance().notifyAllClients(pushJson);
                 }
 
                 // =========================
-                // GET_BIDS
+                // GET_BIDS (GIỮ NGUYÊN)
                 // =========================
                 if (type.equals("GET_BIDS")) {
                     Connection connection = DatabaseConnection.getConnection();
@@ -251,7 +313,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         } catch (Exception e) {
             System.out.println("Client đã ngắt kết nối!");
         } finally {
-            // Khi client ngắt kết nối → xóa khỏi danh sách push
+            // Xóa khỏi danh sách push khi ngắt kết nối (GIỮ NGUYÊN)
             AuctionManager.getInstance().removeClient(out);
             AuctionManager.getInstance().removeObserver(this);
         }
