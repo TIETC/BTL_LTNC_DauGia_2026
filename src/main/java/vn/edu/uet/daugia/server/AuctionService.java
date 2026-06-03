@@ -2,72 +2,62 @@ package vn.edu.uet.daugia.server;
 
 import vn.edu.uet.daugia.shared.exception.AuctionClosedException;
 import vn.edu.uet.daugia.shared.exception.InvalidBidException;
-import vn.edu.uet.daugia.shared.model.*;
-import vn.edu.uet.daugia.shared.model.user.*;
+import vn.edu.uet.daugia.shared.model.Auction;
+import vn.edu.uet.daugia.shared.model.user.Bidder;
+import vn.edu.uet.daugia.database.DatabaseConnection; // Import lớp kết nối CSDL
 
 public class AuctionService {
     private AuctionManager manager = AuctionManager.getInstance();
 
-    /** * Hàm này nhận yêu cầu đặt giá từ ClientHandler của Quân
-     * và trả về kết quả dưới dạng chuỗi JSON
+    /**
+     * Xử lý yêu cầu đặt giá từ Client, lưu vào Database và phát Broadcast
      */
     public String handlePlaceBid(String auctionId, String bidderId, double amount) {
         try {
-            // 1. Tìm phiên đấu giá và người dùng
             Auction auction = manager.findById(auctionId);
-
-            System.out.println("auctionId = " + auctionId);
-            System.out.println("auction = " + auction);
-
             if (auction == null) {
-                return "{\"status\":\"ERROR\",\"message\":\"Auction not found\"}";
+                return "{\"status\":\"ERROR\",\"message\":\"Không tìm thấy mã sản phẩm này\"}";
             }
 
             Bidder bidder = UserManager.findBidder(bidderId);
-
             if (bidder == null) {
-                return "{\"status\":\"ERROR\",\"message\":\"Bidder not found\"}";
+                return "{\"status\":\"ERROR\",\"message\":\"Tài khoản người dùng không tồn tại\"}";
+            }
+            auction.placeBid(bidder, amount);
+            boolean isSaved = DatabaseConnection.saveBidTransaction(auctionId, bidderId, amount);
+            if (!isSaved) {
+                System.err.println("[CẢNH BÁO] Đặt giá thành công trên RAM nhưng chưa lưu được xuống ổ cứng!");
             }
 
-
-            // 2. Kích hoạt logic Đa luồng (ReentrantLock)
-            auction.placeBid(bidder, amount);
-            // Thông báo cho tất cả các Client khác là giá đã thay đổi!
             manager.notifyObservers(auction);
 
-            // 3. Nếu thành công trả về JSON OK
             return String.format(
                     "{\"status\":\"OK\",\"currentPrice\":%.0f,\"leader\":\"%s\"}",
-            auction.getCurrentPrice(),
-            auction.getCurrentLeader().getUsername()
+                    auction.getCurrentPrice(),
+                    auction.getCurrentLeader().getUsername()
             );
 
         } catch (InvalidBidException e) {
-            // Dịch lỗi logic thành JSON để gửi về màn hình Client
             return "{\"status\":\"ERROR\",\"message\":\"" + e.getMessage() + "\"}";
         } catch (AuctionClosedException e) {
-            return "{\"status\":\"ERROR\",\"message\":\"Phiên đã đóng\"}";
+            return "{\"status\":\"ERROR\",\"message\":\"Phiên đấu giá đã đóng\"}";
         } catch (Exception e) {
-
-            System.out.println("LỖI HANDLE BID:");
-
             e.printStackTrace();
-
-            return "{\"status\":\"ERROR\",\"message\":\""
-                    + e.getMessage()
-                    + "\"}";
+            return "{\"status\":\"ERROR\",\"message\":\"Lỗi hệ thống Server\"}";
         }
     }
 
-    /** Trả về danh sách phiên đang chạy dạng JSON cho màn hình chính của Tuấn */
+    /**
+     * Lấy danh sách các phiên đang chạy dưới định dạng JSON cho màn hình chính
+     */
     public String handleGetAuctions() {
         StringBuilder sb = new StringBuilder("[");
         manager.getActiveAuctions().forEach(a ->
-        sb.append(a.toJson()).append(",") // Gọi hàm toJson
+                sb.append(a.toJson()).append(",")
         );
 
         if (sb.length() > 1) {
-            sb.deleteCharAt(sb.length() - 1); // Xóa dấu phẩy thừa ở cuối
+            sb.deleteCharAt(sb.length() - 1);
         }
         return sb.append("]").toString();
     }
