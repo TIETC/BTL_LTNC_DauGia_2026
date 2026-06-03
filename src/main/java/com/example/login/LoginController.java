@@ -1,5 +1,6 @@
 package com.example.login;
 
+import com.example.list.MainDashboardController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import vn.edu.uet.daugia.client.NetworkClient;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import javafx.scene.input.MouseEvent;
 
 public class LoginController {
     @FXML private TextField txtUsername;
@@ -37,7 +39,7 @@ public class LoginController {
         String targetIP = vn.edu.uet.daugia.shared.ServerConfig.SERVER_IP;
         int targetPort = vn.edu.uet.daugia.shared.ServerConfig.SERVER_PORT;
 
-        if (!networkClient.connect(targetIP, targetPort)) {
+        if (!networkClient.connect()) {
             showError("Không thể kết nối đến Máy chủ Đấu giá tại IP: " + targetIP);
             return;
         }
@@ -65,20 +67,25 @@ public class LoginController {
             String role = resObj.get("role").getAsString();
 
             try {
-                // Đăng nhập đúng MySQL -> Cho phép tải file giao diện đấu giá
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/list/auction-view.fxml"));
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/list/main-dashboard.fxml"));
                 Parent root = loader.load();
-                Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-                stage.setScene(new Scene(root));
 
-                // Đổi tiêu đề cửa sổ cho ngầu
-                stage.setTitle("Trang Đấu Giá - Xin chào: " + username + " (" + role + ")");
+                // === BẮT ĐẦU ĐOẠN NỐI DÂY DỮ LIỆU ===
+                // Lấy quyền điều khiển của trang Dashboard vừa load
+                MainDashboardController dashboardController = loader.getController();
+                // Truyền tên tài khoản mà người dùng vừa gõ vào
+                dashboardController.setUsername(username);
+                dashboardController.setRole(role); // Truyền quyền (BIDDER/SELLER) sang Dashboard
+
+                Stage stage = (Stage) txtUsername.getScene().getWindow();
+                stage.setScene(new Scene(root));
+                stage.setTitle("Trang Chủ - Hệ Thống Đấu Giá");
                 stage.show();
             } catch (IOException e) {
-                showError("Lỗi hệ thống: Không tìm thấy file giao diện đấu giá!");
                 e.printStackTrace();
             }
-        } else {
+        }
+        else {
             // Đăng nhập sai MySQL (Sai pass, tài khoản không tồn tại...)
             String message = resObj.has("message") ? resObj.get("message").getAsString() : "Đăng nhập thất bại";
             showError(message);
@@ -92,16 +99,18 @@ public class LoginController {
         alert.setContentText(message);
         alert.showAndWait();
     }
-
     @FXML
-    protected void switchToRegister(ActionEvent event) {
+    protected void switchToRegister() { // Xóa bỏ hoàn toàn chữ 'event' trong ngoặc
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/login/register-view.fxml"));
             Parent root = loader.load();
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+
+            // Lấy cửa sổ hiện tại thông qua ô nhập liệu txtUsername
+            Stage stage = (Stage) txtUsername.getScene().getWindow();
+
             stage.setScene(new Scene(root));
             stage.show();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

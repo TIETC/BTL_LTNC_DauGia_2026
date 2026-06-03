@@ -1,103 +1,101 @@
 package com.example.login;
 
 import javafx.event.ActionEvent;
-
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-
-import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 import javafx.scene.control.PasswordField;
-
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
-import vn.edu.uet.daugia.client.AuctionClient;
+import vn.edu.uet.daugia.client.NetworkClient;
+import vn.edu.uet.daugia.shared.ServerConfig;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import javafx.scene.input.MouseEvent;
 
 public class RegisterController {
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+    @FXML private RadioButton radioBuyer;
+    @FXML private RadioButton radioSeller;
 
-    // Kết nối với fx:id="usernameField"
+    private NetworkClient networkClient = new NetworkClient();
+    private Gson gson = new Gson();
+
     @FXML
-    private TextField usernameField;
-
-    // Kết nối với fx:id="passwordField"
-    @FXML
-    private PasswordField passwordField;
-
-    // Chuyển sang màn hình login
-    @FXML
-    protected void switchToLogin(ActionEvent event) {
-
+    protected void switchToLogin() { // Xóa bỏ hoàn toàn chữ 'event' trong ngoặc
         try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/login/login-view.fxml"));
+            Parent root = loader.load();
 
-            FXMLLoader loader =
-                    new FXMLLoader(
-                            getClass().getResource(
-                                    "/com/example/login/login-view.fxml"
-                            )
-                    );
+            // Lấy cửa sổ hiện tại thông qua ô nhập liệu usernameField
+            Stage stage = (Stage) usernameField.getScene().getWindow();
 
-            Parent root =
-                    loader.load();
-
-            Stage stage =
-                    (Stage) ((Node) event.getSource())
-                            .getScene()
-                            .getWindow();
-
-            stage.setScene(
-                    new Scene(root)
-            );
-
-            stage.setTitle(
-                    "Đăng nhập"
-            );
-
+            stage.setScene(new Scene(root));
+            stage.setTitle("Đăng nhập");
             stage.show();
-
-        } catch (IOException e) {
-
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // Xử lý nút đăng ký
     @FXML
-    protected void onRegisterButtonClick(
-            ActionEvent event
-    ) {
+    protected void onRegisterButtonClick(ActionEvent event) {
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText().trim();
 
-        // Lấy dữ liệu từ ô nhập
-        String username =
-                usernameField.getText();
+        if (username.isEmpty() || password.isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Vui lòng nhập đầy đủ tài khoản và mật khẩu!");
+            return;
+        }
 
-        String password =
-                passwordField.getText();
+        // Mở kết nối sử dụng cấu hình chung
+        if (!networkClient.connect()) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi kết nối", "Không thể kết nối đến Máy chủ.");
+            return;
+        }
 
-        System.out.println(
-                "Username: " + username
+        // ĐỌC QUYỀN TỪ GIAO DIỆN: Kiểm tra xem người dùng đang tích vào nút nào
+        String role = "BIDDER"; // Mặc định là người mua
+        if (radioSeller != null && radioSeller.isSelected()) {
+            role = "SELLER";    // Nếu tích vào nút người bán thì đổi thành SELLER
+        }
+
+        // Đóng gói JSON gửi đi (Nhét biến role vào thay vì gán cứng chữ "BIDDER" như cũ)
+        String jsonRequest = String.format(
+                "{\"type\":\"REGISTER\", \"username\":\"%s\", \"password\":\"%s\", \"role\":\"%s\"}",
+                username, password, role
         );
+        // Gửi và nhận phản hồi
+        String response = networkClient.sendRequest(jsonRequest);
 
-        System.out.println(
-                "Password: " + password
-        );
+        if (response != null && !response.isEmpty()) {
+            JsonObject resObj = gson.fromJson(response, JsonObject.class);
+            String status = resObj.get("status").getAsString();
 
-        // Gửi dữ liệu tới server
-        AuctionClient.sendRegister(
-                username,
-                password
-        );
+            if (status.equals("SUCCESS")) {
+                showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đăng ký thành công! Vui lòng đăng nhập.");
+                switchToLogin(); // Chuyển về trang đăng nhập
+            } else {
+                String message = resObj.has("message") ? resObj.get("message").getAsString() : "Đăng ký thất bại.";
+                showAlert(Alert.AlertType.ERROR, "Lỗi", message);
+            }
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không nhận được phản hồi từ Server.");
+        }
+    }
 
-        System.out.println(
-                "Đã gửi yêu cầu đăng ký!"
-        );
-
-        // Sau khi đăng ký xong
-        // quay về login
-        switchToLogin(event);
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
