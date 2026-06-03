@@ -5,33 +5,35 @@ import java.time.LocalDateTime;
 public class Product {
     private String id;
     private String name;
-    private String session;
+    private String status;       // RUNNING / FINISHED / CANCELED / OPEN
+    private String leader;       // Người đang dẫn đầu
     private double startPrice;
     private double currentPrice;
-    private double maxPrice;       // MỚI: Giá mua đứt (Giá Max)
+    private double maxPrice;
     private String description;
-    private String imageUrl;       // MỚI: Link ảnh Google Drive
-    private LocalDateTime endTime;
+    private String imageUrl;
     private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
-    // Constructor MỚI (đầy đủ 10 tham số) - dùng cho SellerDashboard khi có maxPrice + imageUrl
-    public Product(String id, String name, String session,
+    // ---- Constructor đầy đủ (dùng chính) ----
+    public Product(String id, String name, String status,
                    double startPrice, double currentPrice, double maxPrice,
                    String description, String imageUrl,
                    LocalDateTime startTime, LocalDateTime endTime) {
-        this.id = id;
-        this.name = name;
-        this.session = session;
-        this.startPrice = startPrice;
+        this.id           = id;
+        this.name         = name;
+        this.status       = status != null ? status : "";
+        this.leader       = "";
+        this.startPrice   = startPrice;
         this.currentPrice = currentPrice;
-        this.maxPrice = maxPrice;
-        this.description = description;
-        this.imageUrl = imageUrl;
-        this.startTime = startTime;
-        this.endTime = endTime;
+        this.maxPrice     = maxPrice;
+        this.description  = description != null ? description : "";
+        this.imageUrl     = imageUrl != null ? imageUrl : "";
+        this.startTime    = startTime;
+        this.endTime      = endTime;
     }
 
-    // Constructor CŨ (8 tham số) - GIỮ NGUYÊN để không vỡ các chỗ khác đang gọi
+    // ---- Constructor cũ 8 tham số — giữ để không vỡ code cũ ----
     public Product(String id, String name, String session,
                    double startPrice, double currentPrice,
                    String description,
@@ -39,22 +41,27 @@ public class Product {
         this(id, name, session, startPrice, currentPrice, 0, description, "", startTime, endTime);
     }
 
-    // ---- Getters cũ - GIỮ NGUYÊN ----
+    // ---- Getters ----
     public String getId()               { return id; }
     public String getName()             { return name; }
-    public String getSession()          { return session; }
+    public String getStatus()           { return status; }
+    public String getLeader()           { return leader != null ? leader : ""; }
     public double getStartPrice()       { return startPrice; }
     public double getCurrentPrice()     { return currentPrice; }
+    public double getMaxPrice()         { return maxPrice; }
     public String getDescription()      { return description; }
-    public LocalDateTime getEndTime()   { return endTime; }
+    public String getImageUrl()         { return imageUrl; }
     public LocalDateTime getStartTime() { return startTime; }
+    public LocalDateTime getEndTime()   { return endTime; }
 
-    // ---- Getters MỚI ----
-    public double getMaxPrice()  { return maxPrice; }
-    public String getImageUrl()  { return imageUrl; }
+    // getSession() giữ lại để không vỡ code cũ còn dùng
+    public String getSession()          { return status; }
 
-    // ---- Setters - GIỮ NGUYÊN + THÊM MỚI ----
+    // ---- Setters ----
+    public void setName(String name)                 { this.name = name; }
     public void setCurrentPrice(double currentPrice) { this.currentPrice = currentPrice; }
     public void setMaxPrice(double maxPrice)          { this.maxPrice = maxPrice; }
     public void setImageUrl(String imageUrl)          { this.imageUrl = imageUrl; }
+    public void setStatus(String status)              { this.status = status; }
+    public void setLeader(String leader)              { this.leader = leader != null ? leader : ""; }
 }

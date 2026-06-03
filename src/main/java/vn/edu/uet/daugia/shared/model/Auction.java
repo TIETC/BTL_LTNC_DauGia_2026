@@ -21,6 +21,8 @@ public class Auction extends Entity {
     private LocalDateTime endTime;
     private AuctionStatus status;
     private List<BidTransaction> bidHistory; // Lịch sử tất cả lần đặt giá
+    private LocalDateTime lastBidTime;       // Thời điểm bid mới nhất (push realtime)
+    private String lastBidderName;           // Người đặt bid mới nhất
 
     // Lock để xử lý đồng thời — chống Race Condition
     private final ReentrantLock lock = new ReentrantLock();
@@ -56,6 +58,8 @@ public class Auction extends Entity {
             // Hợp lệ — cập nhật thông tin
             this.currentPrice = amount;
             this.currentLeader = bidder;
+            this.lastBidTime = LocalDateTime.now();
+            this.lastBidderName = bidder.getUsername();
 
             // Tạo bản ghi giao dịch
             BidTransaction tx = new BidTransaction(bidder, this, amount);
@@ -71,6 +75,24 @@ public class Auction extends Entity {
         if (status != AuctionStatus.OPEN) return;
         status = AuctionStatus.RUNNING;
         System.out.println("[START] Phiên đấu giá bắt đầu: " + item.getName());
+    }
+
+    /** Khôi phục giá / người dẫn sau khi nạp phiên từ database. */
+    public void applyRestoredState(double price, Bidder leader) {
+        lock.lock();
+        try {
+            if (price > currentPrice) {
+                currentPrice = price;
+            }
+            if (leader != null) {
+                currentLeader = leader;
+            }
+            if (status == AuctionStatus.OPEN) {
+                status = AuctionStatus.RUNNING;
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void closeAuction() {
@@ -118,9 +140,14 @@ public class Auction extends Entity {
     // Thêm vào dưới cùng class Auction.java
     public String toJson() {
         String leaderName = (currentLeader != null) ? currentLeader.getUsername() : "";
+        String bidTimeStr = (lastBidTime != null) ? lastBidTime.toString() : "";
+        String lastBidder = (lastBidderName != null) ? lastBidderName : leaderName;
         return String.format(
-                "{\"id\":\"%s\",\"itemName\":\"%s\",\"currentPrice\":%.0f,\"leader\":\"%s\",\"status\":\"%s\"}",
-                getId(), item.getName(), currentPrice, leaderName, status.name()
+                "{\"id\":\"%s\",\"itemId\":\"%s\",\"itemName\":\"%s\",\"currentPrice\":%.0f,"
+                        + "\"currentLeader\":\"%s\",\"leader\":\"%s\",\"lastBidder\":\"%s\","
+                        + "\"bidTime\":\"%s\",\"status\":\"%s\"}",
+                getId(), item.getId(), item.getName(), currentPrice,
+                leaderName, leaderName, lastBidder, bidTimeStr, status.name()
         );
     }
 }

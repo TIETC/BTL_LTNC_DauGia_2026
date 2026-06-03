@@ -1,6 +1,7 @@
 package vn.edu.uet.daugia.client.Controller;
 
 import vn.edu.uet.daugia.client.network.NetworkClient;
+import vn.edu.uet.daugia.client.util.AppState;
 import vn.edu.uet.daugia.client.util.SceneManager;
 import vn.edu.uet.daugia.client.util.SessionManager;
 import vn.edu.uet.daugia.shared.model.LoginMessage;
@@ -31,6 +32,7 @@ public class LoginController {
         // Admin tạo thủ công, không đăng ký qua form
         // =========================
         if (username.equals("admin01") && password.equals("admin123")) {
+            AppState.resetForAccountSwitch();
             SessionManager.setUser(username, "ADMIN");
             SceneManager.switchScene("/view/AuctionList.fxml", "Admin - Quản trị hệ thống");
             return;
@@ -42,6 +44,9 @@ public class LoginController {
         // =========================
         new Thread(() -> {
             try {
+                // Tránh đọc nhầm phản hồi CREATE_AUCTION / BID còn sót từ phiên Seller trước
+                AppState.resetForAccountSwitch();
+
                 LoginMessage loginMsg = new LoginMessage("LOGIN", username, password);
                 Gson gson = new Gson();
                 String json = gson.toJson(loginMsg);

@@ -2,6 +2,8 @@ package vn.edu.uet.daugia.client.Controller;
 
 import vn.edu.uet.daugia.client.model.Product;
 import vn.edu.uet.daugia.client.network.NetworkClient;
+import vn.edu.uet.daugia.client.util.AlertUtil;
+import vn.edu.uet.daugia.client.util.DateTimeParseUtil;
 import vn.edu.uet.daugia.client.util.SceneManager;
 import vn.edu.uet.daugia.client.util.SessionManager;
 
@@ -28,10 +30,17 @@ public class AuctionListController {
     @FXML private Label    lblCount;
     @FXML private Button   btnSellerMode;
 
-    // ===== FIX CHÍNH: Cache static để sống sót qua switchScene =====
-    // Khi back từ BiddingRoom → initialize() chạy lại
-    // nhưng productCache vẫn còn → không cần gọi server lại
+    // Cache static: giữ danh sách khi back từ BiddingRoom (không gọi server lại)
     private static final List<Product> productCache = new ArrayList<>();
+
+    // Sau logout / đổi tài khoản → bắt buộc GET_AUCTIONS mới từ server
+    private static boolean mustReloadFromServer = true;
+
+    /** Gọi từ AppState khi logout hoặc trước login — xóa cache cũ của tài khoản trước. */
+    public static void prepareForNewLogin() {
+        productCache.clear();
+        mustReloadFromServer = true;
+    }
 
     // Danh sách controller của card để stop countdown khi rời màn hình
     private final List<ProductCardController> cardControllers = new ArrayList<>();
@@ -51,12 +60,13 @@ public class AuctionListController {
         // (BiddingRoom đã clear listener, phải đăng ký lại)
         registerPushListener();
 
-        if (!productCache.isEmpty()) {
-            // Đã có cache → render lại từ cache, không gọi server
-            rebuildGridFromCache();
-        } else {
-            // Lần đầu vào → load từ server
+        if (mustReloadFromServer || productCache.isEmpty()) {
+            // Đăng nhập Bidder mới / vừa logout Seller → luôn hỏi server
+            mustReloadFromServer = false;
             loadAuctionsFromServer();
+        } else {
+            // Chỉ quay lại từ BiddingRoom / Chi tiết — dùng cache
+            rebuildGridFromCache();
         }
     }
 
@@ -85,7 +95,7 @@ public class AuctionListController {
                             price, price, maxPrice,
                             "", imageUrl,
                             LocalDateTime.now(),
-                            LocalDateTime.parse(endTimeStr));
+                            DateTimeParseUtil.parseFlexible(endTimeStr));
 
                     Platform.runLater(() -> {
                         // Kiểm tra tránh thêm trùng
@@ -128,14 +138,30 @@ public class AuctionListController {
                 String response = NetworkClient.getInstance().readResponse();
                 System.out.println("GET_AUCTIONS response: " + response);
 
-                if (response == null || response.trim().equals("[]")
-                        || response.trim().isEmpty()) {
+                if (response == null || response.trim().isEmpty()) {
+                    Platform.runLater(() -> {
+                        showEmptyState();
+                        AlertUtil.showError("Lỗi", "Không nhận được danh sách từ server!");
+                    });
+                    return;
+                }
+
+                String trimmed = response.trim();
+                // Phản hồi đúng phải là JSON mảng — nếu không, thường là đọc nhầm hàng đợi socket
+                if (!trimmed.startsWith("[")) {
+                    System.err.println("GET_AUCTIONS sai định dạng: " + trimmed);
+                    Platform.runLater(() -> AlertUtil.showError("Lỗi đồng bộ",
+                            "Dữ liệu danh sách không hợp lệ. Hãy đăng xuất và đăng nhập lại."));
+                    return;
+                }
+
+                if (trimmed.equals("[]")) {
                     Platform.runLater(this::showEmptyState);
                     return;
                 }
 
                 Gson gson = new Gson();
-                JsonObject[] auctions = gson.fromJson(response, JsonObject[].class);
+                JsonObject[] auctions = gson.fromJson(trimmed, JsonObject[].class);
 
                 Platform.runLater(() -> {
                     productCache.clear();
@@ -164,7 +190,7 @@ public class AuctionListController {
                                     price, price, maxPrice,
                                     "", imageUrl,
                                     LocalDateTime.now(),
-                                    LocalDateTime.parse(endTimeStr));
+                                    DateTimeParseUtil.parseFlexible(endTimeStr));
 
                             productCache.add(p);
                             addCardToGrid(p);
@@ -233,8 +259,8 @@ public class AuctionListController {
     @FXML
     protected void handleLogout() {
         stopAllCountdowns();
-        productCache.clear(); // Khi logout thì xóa cache
         NetworkClient.getInstance().clearPushListener();
+        // SessionManager.logout() → AppState dọn cache + hàng đợi socket
         SessionManager.logout();
         SceneManager.switchScene("/view/Login.fxml", "Đăng nhập");
     }

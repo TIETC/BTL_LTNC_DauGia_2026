@@ -3,6 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
 
 <BorderPane prefHeight="700.0" prefWidth="1100.0"
             xmlns="http://javafx.com/javafx/21"
@@ -17,7 +18,8 @@
                 <font><Font name="System Bold" size="20.0" /></font>
             </Label>
             <Region HBox.hgrow="ALWAYS"/>
-            <!-- NÚT ĐĂNG XUẤT (GIỮ NGUYÊN) -->
+            <Button onAction="#handleRefresh" text="🔄 Làm mới"
+                    style="-fx-background-color: #2980b9; -fx-text-fill: white; -fx-font-weight: bold;"/>
             <Button onAction="#handleLogout" text="Đăng xuất"
                     style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;"/>
         </HBox>
@@ -28,32 +30,41 @@
                     style="-fx-background-color: transparent;">
             <VBox spacing="12.0"
                   style="-fx-padding: 20; -fx-background-color: #ecf0f1;">
-                <Label text="Chi tiết sản phẩm mới"
+                <Label text="Chi tiết sản phẩm"
                        style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
 
-                <!-- ===== CÁC TRƯỜNG CŨ (GIỮ NGUYÊN) ===== -->
+                <!-- Mã SP (tự sinh, chỉ đọc) -->
                 <TextField fx:id="txtId" prefHeight="30.0"
-                           promptText="Mã sản phẩm (VD: SP01)"/>
+                           promptText="Mã sản phẩm (tự sinh)" editable="false"
+                           style="-fx-background-color: #dfe6e9;"/>
+
                 <TextField fx:id="txtName" prefHeight="30.0"
                            promptText="Tên sản phẩm"/>
-                <TextField fx:id="txtSession" prefHeight="30.0"
-                           promptText="Phiên đấu giá (Sáng/Chiều)"/>
                 <TextField fx:id="txtStartPrice" prefHeight="30.0"
                            promptText="Giá khởi điểm (VNĐ)"/>
 
-                <!-- ===== MỚI: Giá mua đứt ===== -->
+                <!-- Giá mua đứt -->
                 <TextField fx:id="txtMaxPrice" prefHeight="30.0"
-                           promptText="Giá mua đứt / Giá Max (VNĐ, bỏ trống nếu không có)"
+                           promptText="Giá mua đứt (VNĐ, bỏ trống nếu không có)"
                            style="-fx-border-color: #e74c3c;"/>
 
-                <!-- ===== MỚI: Link ảnh ===== -->
-                <TextField fx:id="txtImageUrl" prefHeight="30.0"
-                           promptText="Link ảnh Google Drive (tùy chọn)"
-                           style="-fx-border-color: #3498db;"/>
+                <!-- Link ảnh -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <TextField fx:id="txtImageUrl" prefHeight="30.0"
+                               promptText="Link ảnh (tùy chọn)"
+                               style="-fx-border-color: #3498db;"
+                               HBox.hgrow="ALWAYS"/>
+                    <Button onAction="#handlePreviewImage" text="Xem"
+                            style="-fx-background-color: #3498db; -fx-text-fill: white;"/>
+                </HBox>
+
+                <!-- Preview ảnh -->
+                <ImageView fx:id="imgPreview" fitWidth="330" fitHeight="160"
+                           preserveRatio="true" style="-fx-border-color: #bdc3c7;"/>
 
                 <Separator/>
 
-                <!-- ===== THỜI GIAN BẮT ĐẦU (GIỮ NGUYÊN) ===== -->
+                <!-- Thời gian bắt đầu -->
                 <Label text="Ngày &amp; Giờ Bắt đầu:"
                        style="-fx-font-weight: bold; -fx-text-fill: #2980b9;"/>
                 <DatePicker fx:id="dpStartTime" prefWidth="330.0"/>
@@ -67,7 +78,7 @@
 
                 <Separator/>
 
-                <!-- ===== THỜI GIAN KẾT THÚC (GIỮ NGUYÊN) ===== -->
+                <!-- Thời gian kết thúc -->
                 <Label text="Ngày &amp; Giờ Kết thúc:"
                        style="-fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
                 <DatePicker fx:id="dpEndTime" prefWidth="330.0"/>
@@ -81,11 +92,11 @@
 
                 <Separator/>
 
-                <!-- ===== MÔ TẢ (GIỮ NGUYÊN) ===== -->
+                <!-- Mô tả -->
                 <TextArea fx:id="txtDescription" prefHeight="80.0"
-                          promptText="Mô tả kỹ thuật chi tiết..." wrapText="true"/>
+                          promptText="Mô tả chi tiết..." wrapText="true"/>
 
-                <!-- ===== CÁC NÚT THAO TÁC (GIỮ NGUYÊN) ===== -->
+                <!-- Các nút thao tác -->
                 <HBox spacing="10.0" alignment="CENTER">
                     <Button onAction="#handleAdd" prefHeight="35.0" prefWidth="90.0"
                             style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;"
@@ -98,28 +109,30 @@
                             text="Xóa ❌"/>
                 </HBox>
                 <Button onAction="#handleClear" prefHeight="30.0" prefWidth="330.0"
-                        text="Làm sạch Form" />
+                        text="Làm sạch Form"/>
 
                 <padding>
-                    <Insets bottom="20.0" left="15.0" right="15.0" top="10.0" />
+                    <Insets bottom="20.0" left="15.0" right="15.0" top="10.0"/>
                 </padding>
             </VBox>
         </ScrollPane>
     </left>
 
-    <!-- ===== BẢNG DANH SÁCH (GIỮ NGUYÊN HOÀN TOÀN) ===== -->
+    <!-- Bảng danh sách -->
     <center>
         <VBox spacing="10.0" style="-fx-padding: 15;">
-            <Label text="Danh sách sản phẩm đang quản lý"
+            <Label text="Danh sách phiên đấu giá của bạn"
                    style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
             <TableView fx:id="tableProducts" VBox.vgrow="ALWAYS">
                 <columns>
-                    <TableColumn fx:id="colId"         text="Mã SP"          prefWidth="70"/>
-                    <TableColumn fx:id="colName"        text="Tên sản phẩm"   prefWidth="180"/>
-                    <TableColumn fx:id="colSession"     text="Phiên"          prefWidth="80"/>
-                    <TableColumn fx:id="colStartPrice"  text="Giá khởi điểm" prefWidth="120"/>
-                    <TableColumn fx:id="colStartTime"   text="Ngày bắt đầu"  prefWidth="160"/>
-                    <TableColumn fx:id="colEndTime"     text="Ngày kết thúc" prefWidth="160"/>
+                    <TableColumn fx:id="colId"           text="Mã SP"          prefWidth="70"/>
+                    <TableColumn fx:id="colName"          text="Tên sản phẩm"   prefWidth="160"/>
+                    <TableColumn fx:id="colStatus"        text="Trạng thái"     prefWidth="90"/>
+                    <TableColumn fx:id="colStartPrice"    text="Giá khởi điểm"  prefWidth="110"/>
+                    <TableColumn fx:id="colCurrentPrice"  text="Giá hiện tại"   prefWidth="110"/>
+                    <TableColumn fx:id="colLeader"        text="Người dẫn đầu"  prefWidth="110"/>
+                    <TableColumn fx:id="colStartTime"     text="Bắt đầu"        prefWidth="150"/>
+                    <TableColumn fx:id="colEndTime"       text="Kết thúc"       prefWidth="150"/>
                 </columns>
             </TableView>
         </VBox>

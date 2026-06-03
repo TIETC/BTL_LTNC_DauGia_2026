@@ -7,29 +7,29 @@ import java.util.concurrent.Executors;
 
 public class AuctionServer {
 
-    // Khai báo cổng mạng cho hệ thống
     private static final int PORT = 5000;
-    // Bể chứa luồng (ThreadPool) - Giới hạn tối đa 100 người dùng cùng lúc
-    // Vượt quá 100 người, hệ thống sẽ cho vào hàng đợi (Queue) chứ không tạo thêm luồng
     private static final ExecutorService pool = Executors.newFixedThreadPool(100);
 
     public static void main(String[] args) {
+        new Thread(new ServerDiscovery()).start();
+
         System.out.println("=== HỆ THỐNG ĐẤU GIÁ SERVER ĐANG KHỞI ĐỘNG ===");
+
+        // Nạp các phiên RUNNING từ MySQL vào RAM (tránh "Auction not found" sau khi restart)
+        AuctionService auctionService = new AuctionService();
+        auctionService.loadAllRunningAuctionsFromDatabase();
+
+        // ⭐ MỚI: Bật bộ tự động đóng phiên hết giờ (RUNNING → FINISHED/CANCELED)
+        auctionService.startAuctionCloserScheduler();
+
         System.out.println("Đang mở cổng " + PORT + " và chờ Client kết nối...");
 
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-
-            // Luôn mở cửa đón khách
             while (true) {
-                // Lệnh này là Blocking: Đứng đợi cho đến khi có khách gõ cửa
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("[KẾT NỐI MỚI] Khách hàng từ IP: " + clientSocket.getInetAddress().getHostAddress());
-
-                // Giao Client này cho ThreadPool xử lý
-                // ThreadPool sẽ gắp 1 luồng nhàn rỗi ra để chạy ClientHandler
                 pool.execute(new ClientHandler(clientSocket));
             }
-
         } catch (Exception e) {
             System.err.println("Lỗi tại Server chính: " + e.getMessage());
             e.printStackTrace();

@@ -109,6 +109,16 @@ public class NetworkClient {
         this.pushListener = null;
     }
 
+    /**
+     * Xóa phản hồi server còn tồn trong hàng đợi (chưa được readResponse).
+     * QUAN TRỌNG: Seller tạo phiên → server trả {"status":"OK",...} — nếu không đọc,
+     * Bidder login sau sẽ đọc nhầm tin đó thay vì LOGIN_SUCCESS / GET_AUCTIONS.
+     */
+    public void clearPendingResponses() {
+        responseQueue.clear();
+        System.out.println("[NetworkClient] Đã xóa hàng đợi phản hồi cũ.");
+    }
+
     // Gửi JSON thô lên Server
     public void sendRaw(String json) {
         if (out != null) {

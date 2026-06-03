@@ -5,59 +5,68 @@ import vn.edu.uet.daugia.client.util.AlertUtil;
 import vn.edu.uet.daugia.client.util.SceneManager;
 import vn.edu.uet.daugia.client.util.SessionManager;
 import vn.edu.uet.daugia.client.network.NetworkClient;
+import vn.edu.uet.daugia.client.util.DateTimeParseUtil;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class SellerDashboardController {
 
-    // ===== TABLEVIEW + CỘT (GIỮ NGUYÊN) =====
+    // ===== TABLEVIEW + CỘT =====
     @FXML private TableView<Product> tableProducts;
-    @FXML private TableColumn<Product, String> colId, colName, colSession;
-    @FXML private TableColumn<Product, Double> colStartPrice;
+    @FXML private TableColumn<Product, String>        colId, colName, colStatus, colLeader;
+    @FXML private TableColumn<Product, Double>        colStartPrice, colCurrentPrice;
     @FXML private TableColumn<Product, LocalDateTime> colStartTime, colEndTime;
 
-    // ===== TEXTFIELD CŨ (GIỮ NGUYÊN) =====
-    @FXML private TextField txtId, txtName, txtSession, txtStartPrice;
-    @FXML private TextArea txtDescription;
+    // ===== FORM FIELDS =====
+    @FXML private TextField  txtId;
+    @FXML private TextField  txtName;
+    @FXML private TextField  txtStartPrice;
+    @FXML private TextField  txtMaxPrice;
+    @FXML private TextField  txtImageUrl;
+    @FXML private TextArea   txtDescription;
 
-    // ===== TEXTFIELD MỚI =====
-    @FXML private TextField txtMaxPrice;    // Giá mua đứt
-    @FXML private TextField txtImageUrl;    // Link ảnh Drive
+    // ===== Preview ảnh =====
+    @FXML private ImageView  imgPreview;
 
-    // ===== DATE/TIME KẾT THÚC (GIỮ NGUYÊN) =====
-    @FXML private DatePicker dpEndTime;
-    @FXML private Spinner<Integer> spinHour, spinMin, spinSec;
+    // ===== DATE/TIME KẾT THÚC =====
+    @FXML private DatePicker        dpEndTime;
+    @FXML private Spinner<Integer>  spinHour, spinMin, spinSec;
 
-    // ===== DATE/TIME BẮT ĐẦU (GIỮ NGUYÊN) =====
-    @FXML private DatePicker dpStartTime;
-    @FXML private Spinner<Integer> spinStartHour, spinStartMin, spinStartSec;
+    // ===== DATE/TIME BẮT ĐẦU =====
+    @FXML private DatePicker        dpStartTime;
+    @FXML private Spinner<Integer>  spinStartHour, spinStartMin, spinStartSec;
 
     private ObservableList<Product> productList;
 
-    // ===== INITIALIZE (GIỮ NGUYÊN HOÀN TOÀN, chỉ thêm sync 2 field mới) =====
+    // ===== INITIALIZE =====
 
     @FXML
     public void initialize() {
-        // --- KHÓA CỬA BẢO MẬT (GIỮ NGUYÊN) ---
         String role = SessionManager.getRole();
         if (!"ADMIN".equals(role) && !"SELLER".equals(role)) {
-            javafx.application.Platform.runLater(() -> {
-                AlertUtil.showError("Cảnh báo bảo mật",
-                        "Bạn không có quyền truy cập khu vực này!");
-                SceneManager.switchScene(
-                        "/view/AuctionList.fxml", "Danh sách sản phẩm");
+            Platform.runLater(() -> {
+                AlertUtil.showError("Cảnh báo bảo mật", "Bạn không có quyền truy cập khu vực này!");
+                SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
             });
             return;
         }
 
         productList = FXCollections.observableArrayList();
 
-        // --- Khởi tạo Spinner (GIỮ NGUYÊN) ---
+        // --- Khởi tạo Spinner ---
         initSpinner(spinHour, 23, 23);
         initSpinner(spinMin, 59, 59);
         initSpinner(spinSec, 59, 59);
@@ -67,129 +76,183 @@ public class SellerDashboardController {
         initSpinner(spinStartSec,  59, now.getSecond());
         dpStartTime.setValue(now.toLocalDate());
 
-        // --- Cấu hình cột TableView (GIỮ NGUYÊN) ---
+        // --- ID tự sinh, chỉ đọc ---
+        txtId.setDisable(true);
+
+        // --- Cấu hình cột TableView ---
         colId.setCellValueFactory(new PropertyValueFactory<>("id"));
         colName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        colSession.setCellValueFactory(new PropertyValueFactory<>("session"));
-        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
-        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        colLeader.setCellValueFactory(new PropertyValueFactory<>("leader"));
 
-        // Format tiền tệ (GIỮ NGUYÊN)
+        colStartPrice.setCellValueFactory(new PropertyValueFactory<>("startPrice"));
         colStartPrice.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(Double price, boolean empty) {
-                super.updateItem(price, empty);
-                if (empty || price == null) setText(null);
-                else setText(String.format("%,.0f VNĐ", price));
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
             }
         });
 
-        // Định dạng ngày tháng (GIỮ NGUYÊN)
-        DateTimeFormatter formatter =
-                DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
-        setupDateCell(colStartTime, formatter);
-        setupDateCell(colEndTime, formatter);
+        colCurrentPrice.setCellValueFactory(new PropertyValueFactory<>("currentPrice"));
+        colCurrentPrice.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%,.0f VNĐ", v));
+            }
+        });
+
+        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colStatus.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                if (empty || v == null) { setText(null); setStyle(""); return; }
+                setText(v);
+                switch (v) {
+                    case "RUNNING"  -> setStyle("-fx-text-fill: #27ae60; -fx-font-weight: bold;");
+                    case "FINISHED" -> setStyle("-fx-text-fill: #2980b9; -fx-font-weight: bold;");
+                    case "CANCELED" -> setStyle("-fx-text-fill: #e74c3c;");
+                    default         -> setStyle("");
+                }
+            }
+        });
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+        colStartTime.setCellValueFactory(new PropertyValueFactory<>("startTime"));
+        colEndTime.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        setupDateCell(colStartTime, fmt);
+        setupDateCell(colEndTime, fmt);
 
         tableProducts.setItems(productList);
 
-        // --- Lắng nghe chọn dòng (GIỮ NGUYÊN + THÊM 2 field mới) ---
+        // --- Lắng nghe chọn dòng ---
         tableProducts.getSelectionModel().selectedItemProperty()
-                .addListener((obs, oldSelection, newSelection) -> {
-                    if (newSelection != null) {
-                        // Cũ (GIỮ NGUYÊN)
-                        txtId.setText(newSelection.getId());
-                        txtName.setText(newSelection.getName());
-                        txtSession.setText(newSelection.getSession());
-                        txtStartPrice.setText(
-                                String.format("%.0f", newSelection.getStartPrice()));
-                        txtDescription.setText(newSelection.getDescription());
-
-                        if (newSelection.getStartTime() != null) {
-                            dpStartTime.setValue(
-                                    newSelection.getStartTime().toLocalDate());
-                            spinStartHour.getValueFactory().setValue(
-                                    newSelection.getStartTime().getHour());
+                .addListener((obs, old, newSel) -> {
+                    if (newSel != null) {
+                        txtId.setText(newSel.getId());
+                        txtName.setText(newSel.getName());
+                        txtStartPrice.setText(String.format("%.0f", newSel.getStartPrice()));
+                        txtDescription.setText(newSel.getDescription());
+                        txtMaxPrice.setText(newSel.getMaxPrice() > 0
+                                ? String.format("%.0f", newSel.getMaxPrice()) : "");
+                        txtImageUrl.setText(newSel.getImageUrl() != null ? newSel.getImageUrl() : "");
+                        if (newSel.getStartTime() != null) {
+                            dpStartTime.setValue(newSel.getStartTime().toLocalDate());
+                            spinStartHour.getValueFactory().setValue(newSel.getStartTime().getHour());
+                            spinStartMin.getValueFactory().setValue(newSel.getStartTime().getMinute());
+                            spinStartSec.getValueFactory().setValue(newSel.getStartTime().getSecond());
                         }
-                        if (newSelection.getEndTime() != null) {
-                            dpEndTime.setValue(
-                                    newSelection.getEndTime().toLocalDate());
-                            spinHour.getValueFactory().setValue(
-                                    newSelection.getEndTime().getHour());
+                        if (newSel.getEndTime() != null) {
+                            dpEndTime.setValue(newSel.getEndTime().toLocalDate());
+                            spinHour.getValueFactory().setValue(newSel.getEndTime().getHour());
+                            spinMin.getValueFactory().setValue(newSel.getEndTime().getMinute());
+                            spinSec.getValueFactory().setValue(newSel.getEndTime().getSecond());
                         }
-                        txtId.setDisable(true);
-
-                        // MỚI: Đổ dữ liệu 2 field mới khi chọn dòng
-                        txtMaxPrice.setText(newSelection.getMaxPrice() > 0
-                                ? String.format("%.0f", newSelection.getMaxPrice())
-                                : "");
-                        txtImageUrl.setText(newSelection.getImageUrl() != null
-                                ? newSelection.getImageUrl()
-                                : "");
+                        loadImagePreview(newSel.getImageUrl());
                     }
                 });
+
+        // --- Tải danh sách phiên của seller từ server (1 lần duy nhất) ---
+        loadMyAuctions();
     }
 
-    // ===== HELPER SPINNER + DATE CELL (GIỮ NGUYÊN) =====
+    // ===== LOAD DANH SÁCH PHIÊN CỦA SELLER =====
 
-    private void initSpinner(Spinner<Integer> s, int max, int val) {
-        s.setValueFactory(
-                new SpinnerValueFactory.IntegerSpinnerValueFactory(0, max, val));
-    }
+    private void loadMyAuctions() {
+        String seller = SessionManager.getUsername();
+        new Thread(() -> {
+            try {
+                NetworkClient.getInstance().sendRaw(
+                        String.format("{\"type\":\"GET_MY_AUCTIONS\",\"sellerName\":\"%s\"}", seller));
+                String response = NetworkClient.getInstance().readResponse();
 
-    private void setupDateCell(TableColumn<Product, LocalDateTime> col,
-                               DateTimeFormatter fmt) {
-        col.setCellFactory(tc -> new TableCell<>() {
-            @Override
-            protected void updateItem(LocalDateTime d, boolean e) {
-                super.updateItem(d, e);
-                if (e || d == null) setText(null);
-                else setText(fmt.format(d));
+                if (response == null || !response.startsWith("[")) {
+                    System.err.println("GET_MY_AUCTIONS response lạ: " + response);
+                    return;
+                }
+
+                Gson gson = new Gson();
+                JsonObject[] list = gson.fromJson(response, JsonObject[].class);
+                Platform.runLater(() -> fillProductList(list));
+
+            } catch (Exception e) {
+                System.err.println("Lỗi loadMyAuctions: " + e.getMessage());
             }
-        });
+        }).start();
     }
 
-    // ===== THÊM SẢN PHẨM (GIỮ NGUYÊN LOGIC + thêm maxPrice, imageUrl) =====
+    private void fillProductList(JsonObject[] list) {
+        productList.clear();
+        for (JsonObject a : list) {
+            try {
+                String id           = a.get("itemId").getAsString();
+                String name         = a.get("itemName").getAsString();
+                double startPrice   = a.get("startPrice").getAsDouble();
+                double curPrice     = a.has("currentPrice") ? a.get("currentPrice").getAsDouble() : startPrice;
+                double maxPrice     = a.has("maxPrice") ? a.get("maxPrice").getAsDouble() : 0;
+                String desc         = a.has("description") ? a.get("description").getAsString() : "";
+                String imageUrl     = a.has("imageUrl") ? a.get("imageUrl").getAsString() : "";
+                String status       = a.has("status") ? a.get("status").getAsString() : "";
+                String leader       = a.has("leader") ? a.get("leader").getAsString() : "";
+                String startTimeStr = a.has("startTime") ? a.get("startTime").getAsString() : "";
+                String endTimeStr   = a.has("endTime") ? a.get("endTime").getAsString() : "";
+
+                LocalDateTime startTime = startTimeStr.isEmpty() ? LocalDateTime.now()
+                        : DateTimeParseUtil.parseFlexible(startTimeStr);
+                LocalDateTime endTime   = endTimeStr.isEmpty() ? LocalDateTime.now()
+                        : DateTimeParseUtil.parseFlexible(endTimeStr);
+
+                Product p = new Product(id, name, status,
+                        startPrice, curPrice, maxPrice,
+                        desc, imageUrl, startTime, endTime);
+                p.setLeader(leader);
+                productList.add(p);
+            } catch (Exception ex) {
+                System.err.println("Lỗi parse product: " + ex.getMessage());
+            }
+        }
+        // Sinh ID tiếp theo sau khi load xong
+        txtId.setText(String.format("SP%03d", productList.size() + 1));
+    }
+
+    // ===== THÊM SẢN PHẨM =====
 
     @FXML
     private void handleAdd() {
         try {
-            if (txtId.getText().isEmpty()
-                    || txtName.getText().isEmpty()
-                    || dpEndTime.getValue() == null) {
-                AlertUtil.showError("Lỗi", "Vui lòng nhập đầy đủ thông tin!");
+            if (txtName.getText().isEmpty() || dpEndTime.getValue() == null) {
+                AlertUtil.showError("Lỗi", "Vui lòng nhập đầy đủ tên sản phẩm và thời gian kết thúc!");
                 return;
             }
 
-            double price = Double.parseDouble(txtStartPrice.getText());
-
-            // MỚI: Đọc maxPrice (bỏ trống = 0)
+            double price = Double.parseDouble(txtStartPrice.getText().trim());
             double maxPrice = 0;
             if (!txtMaxPrice.getText().trim().isEmpty()) {
                 maxPrice = Double.parseDouble(txtMaxPrice.getText().trim());
+                if (maxPrice > 0 && maxPrice <= price) {
+                    AlertUtil.showError("Lỗi", "Giá mua đứt phải lớn hơn giá khởi điểm!");
+                    return;
+                }
             }
 
-            // MỚI: Đọc imageUrl
-            String imageUrl = txtImageUrl.getText().trim();
-
             LocalDateTime start = dpStartTime.getValue().atTime(
-                    spinStartHour.getValue(),
-                    spinStartMin.getValue(),
-                    spinStartSec.getValue());
+                    spinStartHour.getValue(), spinStartMin.getValue(), spinStartSec.getValue());
             LocalDateTime end = dpEndTime.getValue().atTime(
-                    spinHour.getValue(),
-                    spinMin.getValue(),
-                    spinSec.getValue());
+                    spinHour.getValue(), spinMin.getValue(), spinSec.getValue());
 
             if (end.isBefore(start)) {
-                AlertUtil.showError("Lỗi",
-                        "Ngày kết thúc phải sau ngày bắt đầu!");
+                AlertUtil.showError("Lỗi", "Ngày kết thúc phải sau ngày bắt đầu!");
                 return;
             }
 
-            long durationMinutes =
-                    java.time.Duration.between(start, end).toMinutes();
+            long durationMinutes = java.time.Duration.between(start, end).toMinutes();
+            String itemId    = txtId.getText();
+            String itemName  = txtName.getText().trim();
+            String desc      = txtDescription.getText().trim();
+            String imageUrl  = txtImageUrl.getText().trim();
 
-            // JSON gửi Server (GIỮ NGUYÊN cấu trúc cũ + thêm 2 field mới)
+            final double finalMaxPrice = maxPrice;
+            final LocalDateTime finalStart = start;
+            final LocalDateTime finalEnd   = end;
+
             String json = String.format(
                     "{\"type\":\"CREATE_AUCTION\"," +
                             "\"itemId\":\"%s\"," +
@@ -200,116 +263,236 @@ public class SellerDashboardController {
                             "\"imageUrl\":\"%s\"," +
                             "\"sellerName\":\"%s\"," +
                             "\"durationMinutes\":%d}",
-                    txtId.getText(),
-                    txtName.getText(),
-                    txtDescription.getText(),
-                    price,
-                    maxPrice,
-                    imageUrl,
-                    SessionManager.getUsername(),
-                    durationMinutes);
+                    escapeJson(itemId), escapeJson(itemName), escapeJson(desc),
+                    price, finalMaxPrice, escapeJson(imageUrl),
+                    escapeJson(SessionManager.getUsername()), durationMinutes);
 
-            NetworkClient.getInstance().sendRaw(json);
+            new Thread(() -> {
+                NetworkClient.getInstance().sendRaw(json);
+                String response = NetworkClient.getInstance().readResponse();
+                Platform.runLater(() -> {
+                    if (response != null && response.contains("\"status\":\"OK\"")) {
+                        Product p = new Product(itemId, itemName, "RUNNING",
+                                price, price, finalMaxPrice,
+                                desc, imageUrl, finalStart, finalEnd);
+                        p.setLeader("");
+                        productList.add(p);
+                        AlertUtil.showSuccess("Thành công", "Đã tạo phiên đấu giá mới!");
+                        handleClear();
+                    } else {
+                        AlertUtil.showError("Lỗi", "Server không tạo được phiên: "
+                                + (response != null ? response : "không có phản hồi"));
+                    }
+                });
+            }).start();
 
-            // Dùng constructor mới 10 tham số
-            productList.add(new Product(
-                    txtId.getText(), txtName.getText(), txtSession.getText(),
-                    price, price, maxPrice,
-                    txtDescription.getText(), imageUrl,
-                    start, end));
-
-            AlertUtil.showSuccess("Thành công", "Đã tạo phiên đấu giá mới!");
-            handleClear();
-
+        } catch (NumberFormatException e) {
+            AlertUtil.showError("Lỗi", "Giá tiền không hợp lệ!");
         } catch (Exception e) {
-            AlertUtil.showError("Lỗi", "Dữ liệu không hợp lệ!");
+            AlertUtil.showError("Lỗi", "Dữ liệu không hợp lệ: " + e.getMessage());
         }
     }
 
-    // ===== SỬA SẢN PHẨM (GIỮ NGUYÊN LOGIC + cập nhật maxPrice, imageUrl) =====
+    // ===== SỬA SẢN PHẨM =====
 
     @FXML
     private void handleUpdate() {
         Product selected = tableProducts.getSelectionModel().getSelectedItem();
-        if (selected == null) return;
-        try {
-            productList.remove(selected);
+        if (selected == null) {
+            AlertUtil.showError("Lỗi", "Vui lòng chọn phiên cần sửa!");
+            return;
+        }
 
+        String status = selected.getStatus();
+        if ("FINISHED".equals(status) || "CANCELED".equals(status)) {
+            AlertUtil.showError("Không thể sửa", "Phiên đã kết thúc, không thể chỉnh sửa!");
+            return;
+        }
+
+        try {
+            String itemName = txtName.getText().trim();
+            String desc     = txtDescription.getText().trim();
+            String imageUrl = txtImageUrl.getText().trim();
             double maxPrice = 0;
             if (!txtMaxPrice.getText().trim().isEmpty()) {
                 maxPrice = Double.parseDouble(txtMaxPrice.getText().trim());
             }
-            String imageUrl = txtImageUrl.getText().trim();
 
-            LocalDateTime start = dpStartTime.getValue().atTime(
-                    spinStartHour.getValue(),
-                    spinStartMin.getValue(),
-                    spinStartSec.getValue());
-            LocalDateTime end = dpEndTime.getValue().atTime(
-                    spinHour.getValue(),
-                    spinMin.getValue(),
-                    spinSec.getValue());
+            final double finalMaxPrice = maxPrice;
+            final String itemId = selected.getId();
 
-            double price = Double.parseDouble(txtStartPrice.getText());
+            String json = String.format(
+                    "{\"type\":\"UPDATE_AUCTION\"," +
+                            "\"itemId\":\"%s\"," +
+                            "\"itemName\":\"%s\"," +
+                            "\"description\":\"%s\"," +
+                            "\"imageUrl\":\"%s\"," +
+                            "\"maxPrice\":%.0f}",
+                    escapeJson(itemId), escapeJson(itemName),
+                    escapeJson(desc), escapeJson(imageUrl), finalMaxPrice);
 
-            Product updated = new Product(
-                    txtId.getText(), txtName.getText(), txtSession.getText(),
-                    price, price, maxPrice,
-                    txtDescription.getText(), imageUrl,
-                    start, end);
+            new Thread(() -> {
+                NetworkClient.getInstance().sendRaw(json);
+                String response = NetworkClient.getInstance().readResponse();
+                Platform.runLater(() -> {
+                    if (response != null && response.contains("\"status\":\"OK\"")) {
+                        int idx = productList.indexOf(selected);
+                        if (idx >= 0) {
+                            Product updated = new Product(
+                                    itemId, itemName, selected.getStatus(),
+                                    selected.getStartPrice(), selected.getCurrentPrice(),
+                                    finalMaxPrice, desc, imageUrl,
+                                    selected.getStartTime(), selected.getEndTime());
+                            updated.setLeader(selected.getLeader());
+                            productList.set(idx, updated);
+                        }
+                        tableProducts.refresh();
+                        AlertUtil.showSuccess("Thành công", "Đã cập nhật phiên đấu giá!");
+                        handleClear();
+                    } else {
+                        AlertUtil.showError("Lỗi", "Cập nhật thất bại: "
+                                + (response != null ? response : "không có phản hồi"));
+                    }
+                });
+            }).start();
 
-            productList.add(updated);
-            tableProducts.refresh();
-            handleClear();
-
+        } catch (NumberFormatException e) {
+            AlertUtil.showError("Lỗi", "Giá tiền không hợp lệ!");
         } catch (Exception e) {
-            AlertUtil.showError("Lỗi", "Sai định dạng!");
+            AlertUtil.showError("Lỗi", e.getMessage());
         }
     }
 
-    // ===== XÓA (GIỮ NGUYÊN) =====
+    // ===== XÓA SẢN PHẨM =====
 
     @FXML
     private void handleDelete() {
-        Product s = tableProducts.getSelectionModel().getSelectedItem();
-        if (s != null) {
-            productList.remove(s);
-            handleClear();
+        Product selected = tableProducts.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            AlertUtil.showError("Lỗi", "Vui lòng chọn phiên cần xóa!");
+            return;
         }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Xác nhận xóa");
+        confirm.setHeaderText("Bạn có chắc muốn xóa phiên \"" + selected.getName() + "\"?");
+        confirm.setContentText("Hành động này không thể hoàn tác.");
+        confirm.showAndWait().ifPresent(btn -> {
+            if (btn != ButtonType.OK) return;
+
+            String json = String.format(
+                    "{\"type\":\"DELETE_AUCTION\",\"itemId\":\"%s\"}",
+                    escapeJson(selected.getId()));
+
+            new Thread(() -> {
+                NetworkClient.getInstance().sendRaw(json);
+                String response = NetworkClient.getInstance().readResponse();
+                Platform.runLater(() -> {
+                    if (response != null && response.contains("\"status\":\"OK\"")) {
+                        productList.remove(selected);
+                        txtId.setText(String.format("SP%03d", productList.size() + 1));
+                        AlertUtil.showSuccess("Thành công", "Đã xóa phiên đấu giá!");
+                        handleClear();
+                    } else {
+                        AlertUtil.showError("Lỗi", "Xóa thất bại: "
+                                + (response != null ? response : "không có phản hồi"));
+                    }
+                });
+            }).start();
+        });
     }
 
-    // ===== LÀM SẠCH FORM (GIỮ NGUYÊN + thêm 2 field mới) =====
+    // ===== LÀM SẠCH FORM =====
 
     @FXML
     private void handleClear() {
-        // Cũ (GIỮ NGUYÊN)
-        txtId.clear();
-        txtId.setDisable(false);
         txtName.clear();
-        txtSession.clear();
         txtStartPrice.clear();
         txtDescription.clear();
-
-        // MỚI
         txtMaxPrice.clear();
         txtImageUrl.clear();
+        if (imgPreview != null) imgPreview.setImage(null);
 
         LocalDateTime now = LocalDateTime.now();
         dpStartTime.setValue(now.toLocalDate());
         dpEndTime.setValue(null);
+        initSpinner(spinStartHour, 23, now.getHour());
+        initSpinner(spinStartMin,  59, now.getMinute());
+        initSpinner(spinStartSec,  59, now.getSecond());
+        initSpinner(spinHour, 23, 23);
+        initSpinner(spinMin,  59, 59);
+        initSpinner(spinSec,  59, 59);
+
         tableProducts.getSelectionModel().clearSelection();
+        txtId.setText(String.format("SP%03d", productList.size() + 1));
     }
 
-    // ===== BACK + LOGOUT (GIỮ NGUYÊN HOÀN TOÀN) =====
+    // ===== PREVIEW ẢNH =====
+
+    @FXML
+    private void handlePreviewImage() {
+        loadImagePreview(txtImageUrl.getText().trim());
+    }
+
+    private void loadImagePreview(String url) {
+        if (imgPreview == null || url == null || url.isEmpty()) return;
+        new Thread(() -> {
+            try {
+                // Xử lý redirect và HTTPS
+                java.net.URL imgUrl = new java.net.URL(url);
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) imgUrl.openConnection();
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestProperty("User-Agent",
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.connect();
+
+                int status = conn.getResponseCode();
+                // Xử lý redirect thủ công nếu cần (301/302)
+                String finalUrl = url;
+                if (status == java.net.HttpURLConnection.HTTP_MOVED_PERM
+                        || status == java.net.HttpURLConnection.HTTP_MOVED_TEMP) {
+                    finalUrl = conn.getHeaderField("Location");
+                }
+
+                final String loadUrl = finalUrl;
+                javafx.scene.image.Image img = new javafx.scene.image.Image(
+                        loadUrl, 330, 160, true, true, false);
+
+                if (img.isError()) {
+                    String detail = img.getException() != null
+                            ? img.getException().getMessage() : "unknown";
+                    System.err.println("[IMG] Lỗi load ảnh: " + detail);
+                    Platform.runLater(() -> {
+                        imgPreview.setImage(null);
+                        AlertUtil.showError("Lỗi ảnh", "Chi tiết: " + detail);
+                    });
+                } else {
+                    Platform.runLater(() -> imgPreview.setImage(img));
+                }
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    imgPreview.setImage(null);
+                    AlertUtil.showError("Lỗi ảnh", "Không kết nối được: " + e.getMessage());
+                });
+            }
+        }).start();
+    }
+
+    // ===== ĐIỀU HƯỚNG =====
+
+    @FXML
+    private void handleRefresh() {
+        loadMyAuctions();
+    }
 
     @FXML
     private void handleBack() {
         if ("ADMIN".equals(SessionManager.getRole())) {
-            SceneManager.switchScene(
-                    "/view/AuctionList.fxml", "Danh sách sản phẩm");
+            SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
         } else {
-            AlertUtil.showError("Hạn chế",
-                    "Người bán không có quyền quay lại danh sách mua!");
+            AlertUtil.showError("Hạn chế", "Người bán không có quyền quay lại danh sách mua!");
         }
     }
 
@@ -317,5 +500,25 @@ public class SellerDashboardController {
     private void handleLogout() {
         SessionManager.logout();
         SceneManager.switchScene("/view/Login.fxml", "Đăng nhập hệ thống");
+    }
+
+    // ===== HELPER =====
+
+    private void initSpinner(Spinner<Integer> s, int max, int val) {
+        s.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(0, max, val));
+    }
+
+    private void setupDateCell(TableColumn<Product, LocalDateTime> col, DateTimeFormatter fmt) {
+        col.setCellFactory(tc -> new TableCell<>() {
+            @Override protected void updateItem(LocalDateTime d, boolean e) {
+                super.updateItem(d, e);
+                setText(e || d == null ? null : fmt.format(d));
+            }
+        });
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -93,26 +93,41 @@
         </VBox>
     </HBox>
 
-    <!-- ===== BIỂU ĐỒ GIÁ: đổi xAxis sang CategoryAxis (SỬA) ===== -->
-    <LineChart fx:id="priceChart"
-               title="Biểu đồ lịch sử giá (Realtime)"
-               prefHeight="250.0"
-               animated="false">
-        <xAxis>
-            <CategoryAxis label="Thời gian" fx:id="xAxis" />
-        </xAxis>
-        <yAxis>
-            <NumberAxis label="Mức giá (VNĐ)" fx:id="yAxis" />
-        </yAxis>
-    </LineChart>
+    <!-- ===== BIỂU ĐỒ + BẢNG LỊCH SỬ ===== -->
+    <HBox spacing="15.0" prefHeight="280.0">
+        <LineChart fx:id="priceChart"
+                   title="Biểu đồ lịch sử giá"
+                   HBox.hgrow="ALWAYS"
+                   prefHeight="280.0"
+                   animated="false">
+            <xAxis>
+                <CategoryAxis label="Thời gian" fx:id="xAxis" />
+            </xAxis>
+            <yAxis>
+                <NumberAxis label="Mức giá (VNĐ)" fx:id="yAxis" />
+            </yAxis>
+        </LineChart>
 
-    <!-- ===== Ô NHẬP GIÁ + NÚT ĐẤU GIÁ (GIỮ NGUYÊN) ===== -->
+        <VBox spacing="6.0" prefWidth="320.0">
+            <Label text="Lịch sử đặt giá (mới nhất trên cùng)"
+                   style="-fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <TableView fx:id="tblBidHistory" prefHeight="250.0" prefWidth="320.0">
+                <columns>
+                    <TableColumn fx:id="colBidder" text="Người đặt" prefWidth="90.0" />
+                    <TableColumn fx:id="colBidTime" text="Thời gian" prefWidth="110.0" />
+                    <TableColumn fx:id="colBidPrice" text="Giá" prefWidth="100.0" />
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+
+    <!-- ===== Ô NHẬP GIÁ + NÚT ĐẤU GIÁ ===== -->
     <HBox spacing="10.0" alignment="CENTER">
         <TextField fx:id="txtBidAmount" prefHeight="40.0" prefWidth="400.0"
-                   promptText="Nhập số tiền muốn tăng thêm (VD: 500000)"
+                   promptText="Nhập giá đặt (VD: 600000 — không dùng dấu chấm)"
                    style="-fx-border-color: #3498db; -fx-border-radius: 5; -fx-background-radius: 5;" />
         <Button fx:id="btnBid" onAction="#handleBid" prefHeight="40.0" prefWidth="120.0"
-                text="TĂNG GIÁ"
+                text="ĐẶT GIÁ"
                 style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
     </HBox>
 </VBox>

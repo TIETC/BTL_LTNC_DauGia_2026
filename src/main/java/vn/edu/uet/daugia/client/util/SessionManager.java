@@ -25,6 +25,8 @@ public class SessionManager {
     public static void logout() {
         role = null;
         username = null;
+        // Đổi tài khoản (Seller → Bidder): dọn socket + cache danh sách SP
+        AppState.resetForAccountSwitch();
         System.out.println("Đã xóa phiên đăng nhập.");
     }
 }
