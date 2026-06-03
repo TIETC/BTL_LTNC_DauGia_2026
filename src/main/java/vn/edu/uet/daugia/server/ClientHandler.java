@@ -273,20 +273,24 @@ public class ClientHandler implements Runnable, AuctionObserver {
                         JsonObject resp = new Gson().fromJson(responseJson, JsonObject.class);
                         if ("OK".equals(resp.get("status").getAsString())) {
                             insertBidRecord(auctionId, bidderId, price);
-
-                            // ⭐ Cập nhật winner tạm thời mỗi lần bid
                             updateWinnerInDb(auctionId, bidderId, price);
 
-                            // ⭐ Kiểm tra giá mua đứt
+                            // Kiểm tra giá mua đứt
                             double maxPrice = getMaxPrice(auctionId);
                             if (maxPrice > 0 && price >= maxPrice) {
                                 System.out.println("[BUYOUT] " + bidderId + " mua đứt phiên " + auctionId + " với giá " + price);
-                                auctionService.finalizeExpiredAuction(auctionId);
-                                // Trả về thông báo mua đứt thành công
+
+                                // FIX: Gửi response BUYOUT cho client NÀY TRƯỚC,
+                                // rồi mới finalize (finalize sẽ broadcast AUCTION_CLOSED
+                                // tới tất cả client). Nếu làm ngược lại, client sẽ đọc
+                                // AUCTION_CLOSED thay vì BUYOUT và hiện "Đặt giá không thành công".
                                 out.println(String.format(
                                         "{\"status\":\"BUYOUT\",\"currentPrice\":%.0f,\"leader\":\"%s\"," +
                                                 "\"message\":\"Chúc mừng! Bạn đã mua đứt sản phẩm!\"}",
                                         price, escapeJson(bidderId)));
+
+                                // Sau đó mới finalize + broadcast AUCTION_CLOSED
+                                auctionService.finalizeExpiredAuction(auctionId);
                                 continue;
                             }
                         }
@@ -376,7 +380,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // ⭐ UPDATE_AUCTION — Sửa thông tin phiên đấu giá
+                // UPDATE_AUCTION — Sửa thông tin phiên đấu giá
                 // =========================
                 if (type.equals("UPDATE_AUCTION")) {
                     String itemId   = obj.get("itemId").getAsString();
@@ -449,7 +453,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // ⭐ DELETE_AUCTION — Xóa phiên đấu giá
+                // DELETE_AUCTION — Xóa phiên đấu giá
                 // =========================
                 if (type.equals("DELETE_AUCTION")) {
                     String itemId = obj.get("itemId").getAsString();
@@ -489,7 +493,6 @@ public class ClientHandler implements Runnable, AuctionObserver {
 
                         if (affected > 0) {
                             out.println("{\"status\":\"OK\",\"message\":\"Đã xóa phiên\"}");
-                            // Thông báo tới tất cả client
                             String pushJson = String.format(
                                     "{\"type\":\"AUCTION_DELETED\",\"auctionId\":\"%s\"}",
                                     escapeJson(itemId));
