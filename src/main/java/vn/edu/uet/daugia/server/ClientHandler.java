@@ -94,25 +94,42 @@ public class ClientHandler implements Runnable, AuctionObserver {
                 }
 
                 // =========================
-                // LOGIN (GIỮ NGUYÊN)
+                // LOGIN (ĐÃ CẬP NHẬT CUSTOM EXCEPTION)
                 // =========================
                 if (type.equals("LOGIN")) {
-                    LoginMessage login = gson.fromJson(json, LoginMessage.class);
-                    Connection connection = DatabaseConnection.getConnection();
-                    String sql = "SELECT * FROM users WHERE username=? AND password=?";
-                    PreparedStatement statement = connection.prepareStatement(sql);
-                    statement.setString(1, login.getUsername());
-                    statement.setString(2, login.getPassword());
-                    ResultSet resultSet = statement.executeQuery();
+                        LoginMessage login = gson.fromJson(json, LoginMessage.class);
 
-                    if (resultSet.next()) {
-                        String role = resultSet.getString("role");
-                        if (role == null || role.isEmpty()) role = "BIDDER";
-                        out.println("LOGIN_SUCCESS:" + role);
-                        System.out.println("Đăng nhập thành công! Role: " + role);
-                    } else {
+                    try {
+                        Connection connection = DatabaseConnection.getConnection();
+                        if (connection == null) {
+                            throw new RuntimeException("Không thể kết nối đến cơ sở dữ liệu");
+                        }
+
+                        String sql = "SELECT * FROM users WHERE username=? AND password=?";
+                        PreparedStatement statement = connection.prepareStatement(sql);
+                        statement.setString(1, login.getUsername());
+                        statement.setString(2, login.getPassword());
+                        ResultSet resultSet = statement.executeQuery();
+
+                        if (resultSet.next()) {
+                            String role = resultSet.getString("role");
+                            if (role == null || role.isEmpty()) role = "BIDDER";
+                            out.println("LOGIN_SUCCESS:" + role);
+                            System.out.println("Đăng nhập thành công! Role: " + role);
+                        } else {
+                            // Chủ động ném ngoại lệ khi thông tin xác thực sai
+                            throw new vn.edu.uet.daugia.shared.exception.AuthenticationException("Sai tài khoản hoặc mật khẩu!");
+                        }
+
+                    } catch (vn.edu.uet.daugia.shared.exception.AuthenticationException e) {
+                        // Bắt ngoại lệ và gửi tín hiệu đóng gói về cho Client
                         out.println("LOGIN_FAILED");
-                        System.out.println("Sai tài khoản hoặc mật khẩu!");
+                        System.out.println("Lỗi xác thực: " + e.getMessage());
+
+                    } catch (Exception e) {
+                        // Bắt các lỗi liên quan đến Database hoặc đứt kết nối
+                        out.println("LOGIN_FAILED:SERVER_ERROR");
+                        System.out.println("Lỗi server khi đăng nhập: " + e.getMessage());
                     }
                 }
 

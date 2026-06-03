@@ -15,8 +15,8 @@ public class AuctionService {
         try {
             // 1. Tìm phiên đấu giá và người dùng
             Auction auction = manager.findById(auctionId);
-
-            System.out.println("auctionId = " + auctionId);
+//
+//            System.out.println("auctionId = " + auctionId);
             System.out.println("auction = " + auction);
 
             if (auction == null) {
