@@ -1,44 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.*?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<HBox fx:controller="com.example.login.LoginController"
+      stylesheets="@style.css"
+      styleClass="root-container"
+      prefWidth="900" prefHeight="600"
+      xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17">
 
-<StackPane prefHeight="450.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.login.LoginController">
-    <children>
-        <VBox alignment="CENTER" maxWidth="400.0" maxHeight="350.0" spacing="20.0" style="-fx-background-color: #f4f4f4; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 0);">
-            <padding>
-                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-            </padding>
-            <children>
-                <Label text="ĐĂNG NHẬP HỆ THỐNG">
-                    <font>
-                        <Font name="System Bold" size="24.0" />
-                    </font>
-                </Label>
+    <VBox prefWidth="360" alignment="CENTER_LEFT" styleClass="left-pane" spacing="15">
 
-                <TextField fx:id="txtUsername" prefHeight="35.0" promptText="Tên đăng nhập" />
+        <Label text="Welcome Back" styleClass="prestige-title"/>
+        <Label text="Truy cập hệ thống đấu giá trực tuyến." styleClass="prestige-subtitle"/>
 
-                <PasswordField fx:id="txtPassword" prefHeight="35.0" promptText="Mật khẩu" />
-
-                <Button mnemonicParsing="false" onAction="#onLoginButtonClick" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #1a0dab; -fx-text-fill: white; -fx-cursor: hand;" text="Đăng nhập">
-                    <font>
-                        <Font name="System Bold" size="14.0" />
-                    </font>
-                </Button>
-
-                <Hyperlink onAction="#switchToRegister" style="-fx-text-fill: #1a0dab;" text="Chưa có tài khoản? Đăng ký ngay">
-                    <font>
-                        <Font size="13.0" />
-                    </font>
-                </Hyperlink>
-            </children>
+        <VBox spacing="5">
+            <Label text="TÀI KHOẢN" styleClass="input-label"/>
+            <TextField fx:id="txtUsername" styleClass="prestige-input"/>
         </VBox>
-    </children>
-</StackPane>
+
+        <VBox spacing="5">
+            <Label text="MẬT KHẨU" styleClass="input-label"/>
+            <PasswordField fx:id="txtPassword" styleClass="prestige-input"/>
+        </VBox>
+
+        <Region prefHeight="10"/>
+
+        <Button text="ĐĂNG NHẬP" onAction="#onLoginButtonClick" maxWidth="Infinity" styleClass="btn-prestige"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="5" style="-fx-padding: 20 0 0 0;">
+            <Label text="Chưa có tài khoản?" styleClass="link-text"/>
+            <Label text="Đăng ký ngay" onMouseClicked="#switchToRegister" styleClass="link-action"/>
+        </HBox>
+
+    </VBox>
+
+    <StackPane HBox.hgrow="ALWAYS" style="-fx-background-color: #1a1a1a;">
+        <ImageView fitWidth="540" fitHeight="600" preserveRatio="false">
+            <image>
+                <Image url="@background.png"/>
+            </image>
+        </ImageView>
+    </StackPane>
+
+</HBox>

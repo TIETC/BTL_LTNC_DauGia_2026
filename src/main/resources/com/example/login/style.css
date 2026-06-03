@@ -1,0 +1,118 @@
+/* Nền tổng thể */
+.root-container {
+    -fx-background-color: #ffffff;
+}
+
+/* Khu vực Form bên trái */
+.left-pane {
+    -fx-background-color: #ffffff;
+    -fx-padding: 40 60 40 60;
+}
+
+/* Tiêu đề chính (Welcome Back / Create Account) */
+.prestige-title {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a1a1a;
+}
+
+/* Tiêu đề phụ (Truy cập hệ thống...) */
+.prestige-subtitle {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 13px;
+    -fx-text-fill: #7f8c8d;
+    -fx-padding: 0 0 20 0;
+}
+
+/* Nhãn của các ô nhập liệu (TÀI KHOẢN, MẬT KHẨU) */
+.input-label {
+    -fx-font-family: "Segoe UI", sans-serif;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #7f8c8d;
+}
+
+/* Ô nhập liệu - Chỉ kẻ viền dưới mỏng */
+.prestige-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #dcdde1 transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-font-size: 14px;
+    -fx-padding: 8 0 8 0;
+    -fx-text-fill: #2c3e50;
+}
+
+.prestige-input:focused {
+    -fx-border-color: transparent transparent #c8a97e transparent; /* Viền vàng khi click */
+    -fx-border-width: 0 0 2 0;
+}
+
+/* Nút Đăng Nhập / Sign Up màu Vàng Gold sang trọng */
+.btn-prestige {
+    -fx-background-color: #c8a97e;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 0 12 0;
+    -fx-cursor: hand;
+    -fx-background-radius: 4;
+}
+
+.btn-prestige:hover {
+    -fx-background-color: #b5956a;
+}
+
+/* Link chuyển trang */
+.link-text {
+    -fx-text-fill: #1a1a1a;
+    -fx-font-size: 13px;
+}
+.link-action {
+    -fx-text-fill: #c8a97e;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+/* ================= DASHBOARD STYLES ================= */
+/* Cột Menu bên trái */
+.sidebar {
+    -fx-background-color: #f9f9f9;
+    -fx-border-color: transparent #e0e0e0 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 25 15 25 15;
+}
+
+/* Các nút bấm trên Menu */
+.nav-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #555555;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-alignment: center-left;
+    -fx-padding: 12 20 12 20;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+/* Hiệu ứng khi di chuột qua nút Menu */
+.nav-btn:hover {
+    -fx-background-color: #eeeeee;
+    -fx-text-fill: #1a1a1a;
+}
+
+/* Hiệu ứng cho nút Menu đang được chọn (Active) */
+.nav-btn-active {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #c8a97e;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+/* Khung thông tin User ở góc dưới trái */
+.user-info-box {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 10;
+    -fx-padding: 15;
+}
