@@ -14,7 +14,7 @@ import com.google.gson.Gson;
 
 public class LoginController {
 
-    @FXML private TextField txtUsername;
+    @FXML private TextField     txtUsername;
     @FXML private PasswordField txtPassword;
 
     @FXML
@@ -27,34 +27,13 @@ public class LoginController {
             return;
         }
 
-        // =========================
-        // TÀI KHOẢN MẪU CỨNG
-        // Admin tạo thủ công, không đăng ký qua form
-        // =========================
-        if (username.equals("admin01") && password.equals("admin123")) {
-            AppState.resetForAccountSwitch();
-            SessionManager.setUser(username, "ADMIN");
-            SceneManager.switchScene("/view/AuctionList.fxml", "Admin - Quản trị hệ thống");
-            return;
-        }
-
-        // =========================
-        // ĐĂNG NHẬP QUA SERVER
-        // Bidder và Seller đăng ký qua form → lưu DB → login ở đây
-        // =========================
         new Thread(() -> {
             try {
-                // Tránh đọc nhầm phản hồi CREATE_AUCTION / BID còn sót từ phiên Seller trước
                 AppState.resetForAccountSwitch();
 
                 LoginMessage loginMsg = new LoginMessage("LOGIN", username, password);
-                Gson gson = new Gson();
-                String json = gson.toJson(loginMsg);
+                NetworkClient.getInstance().sendRaw(new Gson().toJson(loginMsg));
 
-                NetworkClient.getInstance().sendRaw(json);
-                System.out.println("Đã gửi LOGIN: " + json);
-
-                // Server trả về "LOGIN_SUCCESS:BIDDER" hoặc "LOGIN_SUCCESS:SELLER"
                 String response = NetworkClient.getInstance().readResponse();
                 System.out.println("Server phản hồi: " + response);
 
@@ -63,22 +42,24 @@ public class LoginController {
                         showError("Không nhận được phản hồi từ Server!");
 
                     } else if (response.startsWith("LOGIN_SUCCESS")) {
-                        // Tách role ra từ "LOGIN_SUCCESS:BIDDER"
                         String role = response.contains(":")
-                                ? response.split(":")[1]
-                                : "BIDDER"; // mặc định nếu DB chưa có cột role
+                                ? response.split(":")[1] : "BIDDER";
 
-                        // Lưu session
                         SessionManager.setUser(username, role);
 
-                        // Chuyển màn hình đúng theo role
                         switch (role) {
+                            case "ADMIN":
+                                SceneManager.switchScene("/view/SellerDashboard.fxml",
+                                        "Admin - Quản trị hệ thống");
+                                break;
                             case "SELLER":
-                                SceneManager.switchScene("/view/SellerDashboard.fxml", "Kênh người bán");
+                                SceneManager.switchScene("/view/SellerDashboard.fxml",
+                                        "Kênh người bán");
                                 break;
                             case "BIDDER":
                             default:
-                                SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách đấu giá");
+                                SceneManager.switchScene("/view/AuctionList.fxml",
+                                        "Danh sách đấu giá");
                                 break;
                         }
 
@@ -91,8 +72,7 @@ public class LoginController {
 
             } catch (Exception e) {
                 javafx.application.Platform.runLater(() ->
-                        showError("Không thể kết nối tới Server!")
-                );
+                        showError("Không thể kết nối tới Server!"));
                 e.printStackTrace();
             }
         }).start();
