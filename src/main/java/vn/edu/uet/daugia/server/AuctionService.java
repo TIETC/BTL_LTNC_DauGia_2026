@@ -15,7 +15,20 @@ public class AuctionService {
         try {
             // 1. Tìm phiên đấu giá và người dùng
             Auction auction = manager.findById(auctionId);
+//
+//            System.out.println("auctionId = " + auctionId);
+            System.out.println("auction = " + auction);
+
+            if (auction == null) {
+                return "{\"status\":\"ERROR\",\"message\":\"Auction not found\"}";
+            }
+
             Bidder bidder = UserManager.findBidder(bidderId);
+
+            if (bidder == null) {
+                return "{\"status\":\"ERROR\",\"message\":\"Bidder not found\"}";
+            }
+
 
             // 2. Kích hoạt logic Đa luồng (ReentrantLock)
             auction.placeBid(bidder, amount);
@@ -35,7 +48,14 @@ public class AuctionService {
         } catch (AuctionClosedException e) {
             return "{\"status\":\"ERROR\",\"message\":\"Phiên đã đóng\"}";
         } catch (Exception e) {
-            return "{\"status\":\"ERROR\",\"message\":\"Lỗi hệ thống\"}";
+
+            System.out.println("LỖI HANDLE BID:");
+
+            e.printStackTrace();
+
+            return "{\"status\":\"ERROR\",\"message\":\""
+                    + e.getMessage()
+                    + "\"}";
         }
     }
 

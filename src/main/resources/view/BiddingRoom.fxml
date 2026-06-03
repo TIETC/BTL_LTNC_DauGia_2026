@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.image.ImageView?>
+
+<VBox spacing="15.0" prefWidth="900.0" prefHeight="700.0"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="vn.edu.uet.daugia.client.Controller.BiddingRoomController">
+    <padding>
+        <Insets bottom="20.0" left="25.0" right="25.0" top="15.0" />
+    </padding>
+
+    <!-- ===== THANH ĐIỀU HƯỚNG (GIỮ NGUYÊN) ===== -->
+    <HBox alignment="CENTER_LEFT" spacing="15.0">
+        <Button text="⬅ Trở lại Chi tiết" onAction="#handleBackToDetail"
+                style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button text="Danh sách SP" onAction="#handleBackToList"
+                style="-fx-background-color: #34495e; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="lblName" text="Tên sản phẩm">
+            <font><Font name="System Bold" size="22.0" /></font>
+        </Label>
+    </HBox>
+
+    <Separator />
+
+    <!-- ===== KHU VỰC ẢNH + GIÁ KHỞI ĐIỂM / GIÁ MAX (MỚI) ===== -->
+    <HBox spacing="20.0" alignment="CENTER_LEFT"
+          style="-fx-background-color: #f8f9fa; -fx-background-radius: 8; -fx-padding: 10;">
+
+        <!-- Ảnh sản phẩm -->
+        <ImageView fx:id="productImageView"
+                   fitWidth="220.0" fitHeight="160.0"
+                   preserveRatio="true" pickOnBounds="true"
+                   style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.15), 6, 0, 0, 2);"/>
+
+        <!-- Thông tin giá -->
+        <VBox spacing="12.0" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label text="Giá khởi điểm:"
+                       style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <Label fx:id="lblStartPrice" text="---"
+                       style="-fx-text-fill: #2980b9; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+            </HBox>
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <Label text="Giá mua đứt (Max):"
+                       style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                <Label fx:id="lblMaxPrice" text="---"
+                       style="-fx-text-fill: #e74c3c; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <!-- ===== THÔNG TIN SẢN PHẨM (GIỮ NGUYÊN) ===== -->
+    <GridPane hgap="20.0" vgap="10.0">
+        <columnConstraints>
+            <ColumnConstraints minWidth="150.0" />
+            <ColumnConstraints hgrow="ALWAYS" />
+        </columnConstraints>
+        <children>
+            <Label text="Mã SP:" GridPane.rowIndex="0" GridPane.columnIndex="0"
+                   style="-fx-font-weight: bold;" />
+            <Label fx:id="lblId" text="---" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+
+            <Label text="Phiên đấu giá:" GridPane.rowIndex="1" GridPane.columnIndex="0"
+                   style="-fx-font-weight: bold;" />
+            <Label fx:id="lblSession" text="---" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+
+            <Label text="Mô tả:" GridPane.rowIndex="2" GridPane.columnIndex="0"
+                   style="-fx-font-weight: bold;" />
+            <Label fx:id="lblDescription" text="---" wrapText="true"
+                   GridPane.rowIndex="2" GridPane.columnIndex="1" />
+        </children>
+    </GridPane>
+
+    <!-- ===== ĐỒNG HỒ + GIÁ HIỆN TẠI (GIỮ NGUYÊN) ===== -->
+    <HBox spacing="50.0" alignment="CENTER">
+        <VBox alignment="CENTER" spacing="5.0">
+            <Label text="THỜI GIAN CÒN LẠI:" style="-fx-font-weight: bold;" />
+            <Label fx:id="lblTimer" text="00:00:00"
+                   style="-fx-text-fill: red; -fx-font-size: 26px; -fx-font-weight: bold;" />
+        </VBox>
+        <VBox alignment="CENTER" spacing="5.0">
+            <Label text="GIÁ HIỆN TẠI:" style="-fx-font-weight: bold;" />
+            <Label fx:id="lblCurrentPrice" text="0 VNĐ"
+                   style="-fx-text-fill: #27ae60; -fx-font-size: 26px; -fx-font-weight: bold;" />
+        </VBox>
+    </HBox>
+
+    <!-- ===== BIỂU ĐỒ GIÁ: đổi xAxis sang CategoryAxis (SỬA) ===== -->
+    <LineChart fx:id="priceChart"
+               title="Biểu đồ lịch sử giá (Realtime)"
+               prefHeight="250.0"
+               animated="false">
+        <xAxis>
+            <CategoryAxis label="Thời gian" fx:id="xAxis" />
+        </xAxis>
+        <yAxis>
+            <NumberAxis label="Mức giá (VNĐ)" fx:id="yAxis" />
+        </yAxis>
+    </LineChart>
+
+    <!-- ===== Ô NHẬP GIÁ + NÚT ĐẤU GIÁ (GIỮ NGUYÊN) ===== -->
+    <HBox spacing="10.0" alignment="CENTER">
+        <TextField fx:id="txtBidAmount" prefHeight="40.0" prefWidth="400.0"
+                   promptText="Nhập số tiền muốn tăng thêm (VD: 500000)"
+                   style="-fx-border-color: #3498db; -fx-border-radius: 5; -fx-background-radius: 5;" />
+        <Button fx:id="btnBid" onAction="#handleBid" prefHeight="40.0" prefWidth="120.0"
+                text="TĂNG GIÁ"
+                style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
+    </HBox>
+</VBox>

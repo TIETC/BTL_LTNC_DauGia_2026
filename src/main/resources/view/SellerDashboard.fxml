@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane prefHeight="700.0" prefWidth="1100.0"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="vn.edu.uet.daugia.client.Controller.SellerDashboardController">
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0"
+              style="-fx-background-color: #2c3e50; -fx-padding: 15;">
+            <Button onAction="#handleBack" text="⬅ Trở lại"
+                    style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-weight: bold;"/>
+            <Label text="QUẢN TRỊ VIÊN / NGƯỜI BÁN" textFill="WHITE">
+                <font><Font name="System Bold" size="20.0" /></font>
+            </Label>
+            <Region HBox.hgrow="ALWAYS"/>
+            <!-- NÚT ĐĂNG XUẤT (GIỮ NGUYÊN) -->
+            <Button onAction="#handleLogout" text="Đăng xuất"
+                    style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;"/>
+        </HBox>
+    </top>
+
+    <left>
+        <ScrollPane fitToWidth="true" prefWidth="380.0"
+                    style="-fx-background-color: transparent;">
+            <VBox spacing="12.0"
+                  style="-fx-padding: 20; -fx-background-color: #ecf0f1;">
+                <Label text="Chi tiết sản phẩm mới"
+                       style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+
+                <!-- ===== CÁC TRƯỜNG CŨ (GIỮ NGUYÊN) ===== -->
+                <TextField fx:id="txtId" prefHeight="30.0"
+                           promptText="Mã sản phẩm (VD: SP01)"/>
+                <TextField fx:id="txtName" prefHeight="30.0"
+                           promptText="Tên sản phẩm"/>
+                <TextField fx:id="txtSession" prefHeight="30.0"
+                           promptText="Phiên đấu giá (Sáng/Chiều)"/>
+                <TextField fx:id="txtStartPrice" prefHeight="30.0"
+                           promptText="Giá khởi điểm (VNĐ)"/>
+
+                <!-- ===== MỚI: Giá mua đứt ===== -->
+                <TextField fx:id="txtMaxPrice" prefHeight="30.0"
+                           promptText="Giá mua đứt / Giá Max (VNĐ, bỏ trống nếu không có)"
+                           style="-fx-border-color: #e74c3c;"/>
+
+                <!-- ===== MỚI: Link ảnh ===== -->
+                <TextField fx:id="txtImageUrl" prefHeight="30.0"
+                           promptText="Link ảnh Google Drive (tùy chọn)"
+                           style="-fx-border-color: #3498db;"/>
+
+                <Separator/>
+
+                <!-- ===== THỜI GIAN BẮT ĐẦU (GIỮ NGUYÊN) ===== -->
+                <Label text="Ngày &amp; Giờ Bắt đầu:"
+                       style="-fx-font-weight: bold; -fx-text-fill: #2980b9;"/>
+                <DatePicker fx:id="dpStartTime" prefWidth="330.0"/>
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Spinner fx:id="spinStartHour" prefWidth="75" editable="true"/>
+                    <Label text=":"/>
+                    <Spinner fx:id="spinStartMin" prefWidth="75" editable="true"/>
+                    <Label text=":"/>
+                    <Spinner fx:id="spinStartSec" prefWidth="75" editable="true"/>
+                </HBox>
+
+                <Separator/>
+
+                <!-- ===== THỜI GIAN KẾT THÚC (GIỮ NGUYÊN) ===== -->
+                <Label text="Ngày &amp; Giờ Kết thúc:"
+                       style="-fx-font-weight: bold; -fx-text-fill: #c0392b;"/>
+                <DatePicker fx:id="dpEndTime" prefWidth="330.0"/>
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Spinner fx:id="spinHour" prefWidth="75" editable="true"/>
+                    <Label text=":"/>
+                    <Spinner fx:id="spinMin" prefWidth="75" editable="true"/>
+                    <Label text=":"/>
+                    <Spinner fx:id="spinSec" prefWidth="75" editable="true"/>
+                </HBox>
+
+                <Separator/>
+
+                <!-- ===== MÔ TẢ (GIỮ NGUYÊN) ===== -->
+                <TextArea fx:id="txtDescription" prefHeight="80.0"
+                          promptText="Mô tả kỹ thuật chi tiết..." wrapText="true"/>
+
+                <!-- ===== CÁC NÚT THAO TÁC (GIỮ NGUYÊN) ===== -->
+                <HBox spacing="10.0" alignment="CENTER">
+                    <Button onAction="#handleAdd" prefHeight="35.0" prefWidth="90.0"
+                            style="-fx-background-color: #27ae60; -fx-text-fill: white; -fx-font-weight: bold;"
+                            text="Thêm +"/>
+                    <Button onAction="#handleUpdate" prefHeight="35.0" prefWidth="90.0"
+                            style="-fx-background-color: #f39c12; -fx-text-fill: white; -fx-font-weight: bold;"
+                            text="Sửa ✎"/>
+                    <Button onAction="#handleDelete" prefHeight="35.0" prefWidth="90.0"
+                            style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-weight: bold;"
+                            text="Xóa ❌"/>
+                </HBox>
+                <Button onAction="#handleClear" prefHeight="30.0" prefWidth="330.0"
+                        text="Làm sạch Form" />
+
+                <padding>
+                    <Insets bottom="20.0" left="15.0" right="15.0" top="10.0" />
+                </padding>
+            </VBox>
+        </ScrollPane>
+    </left>
+
+    <!-- ===== BẢNG DANH SÁCH (GIỮ NGUYÊN HOÀN TOÀN) ===== -->
+    <center>
+        <VBox spacing="10.0" style="-fx-padding: 15;">
+            <Label text="Danh sách sản phẩm đang quản lý"
+                   style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+            <TableView fx:id="tableProducts" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="colId"         text="Mã SP"          prefWidth="70"/>
+                    <TableColumn fx:id="colName"        text="Tên sản phẩm"   prefWidth="180"/>
+                    <TableColumn fx:id="colSession"     text="Phiên"          prefWidth="80"/>
+                    <TableColumn fx:id="colStartPrice"  text="Giá khởi điểm" prefWidth="120"/>
+                    <TableColumn fx:id="colStartTime"   text="Ngày bắt đầu"  prefWidth="160"/>
+                    <TableColumn fx:id="colEndTime"     text="Ngày kết thúc" prefWidth="160"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+</BorderPane>
