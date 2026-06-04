@@ -1,4 +1,4 @@
-Hệ Thống Đấu Giá Trực Tuyến- Nhóm 9 
+## Hệ Thống Đấu Giá Trực Tuyến - Nhóm 9 
 
 > Đại học Công nghệ, ĐHQGHN  
 > Xây dựng hệ thống đấu giá trực tuyến theo kiến trúc Client–Server, tương tự mô hình eBay Auctions.
