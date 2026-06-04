@@ -55,6 +55,8 @@ Bước 1: Khởi tạo Cơ sở dữ liệu (MySQL)
 Mở MySQL Workbench hoặc Terminal.
 
 Chạy đoạn script SQL sau để tạo CSDL auction_db và các bảng cần thiết:
+```sql
+
 CREATE DATABASE IF NOT EXISTS auction_db;
 USE auction_db;
 
@@ -96,6 +98,7 @@ Mở file src/vn/edu/uet/daugia/database/DatabaseConnection.java, kiểm tra và
 private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
 private static final String USER = "root";       // <-- Thay đổi nếu cần
 private static final String PASSWORD = "123456"; // <-- Thay đổi nếu cần
+```
 
 ## 📁 Cấu trúc thư mục
 
