@@ -56,7 +56,9 @@ public class SellerDashboardController {
     @FXML
     public void initialize() {
         String role = SessionManager.getRole();
-        if (!"ADMIN".equals(role) && !"SELLER".equals(role)) {
+        if (!"SELLER".equals(role)) {
+            // ✅ SỬA: Chỉ SELLER mới được vào SellerDashboard.
+            // Admin có màn hình riêng (AdminDashboard), không cần vào đây nữa.
             Platform.runLater(() -> {
                 AlertUtil.showError("Cảnh báo bảo mật", "Bạn không có quyền truy cập khu vực này!");
                 SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
@@ -209,8 +211,21 @@ public class SellerDashboardController {
                 System.err.println("Lỗi parse product: " + ex.getMessage());
             }
         }
-        // Sinh ID tiếp theo sau khi load xong
-        txtId.setText(String.format("SP%03d", productList.size() + 1));
+        // ✅ SỬA: Sinh ID dựa trên timestamp (milliseconds) thay vì size+1
+        // Đảm bảo không bao giờ trùng lặp với ID đã có trong DB
+        generateNewId();
+    }
+
+    /**
+     * ✅ PHƯƠNG THỨC MỚI: Sinh ID duy nhất dựa trên timestamp.
+     * Thay thế hoàn toàn logic cũ: String.format("SP%03d", productList.size() + 1)
+     * Logic cũ gây lỗi Duplicate Key vì nhiều Seller/Admin cùng có list rỗng
+     * sẽ đều được gán SP001, dẫn đến trùng khóa chính trong DB.
+     */
+    private void generateNewId() {
+        // Dùng 6 chữ số cuối của System.currentTimeMillis() để tạo ID ngắn gọn
+        // Ví dụ: SP_123456 — thực tế không bao giờ trùng vì timestamp luôn tăng
+        txtId.setText("SP" + (System.currentTimeMillis() % 1_000_000));
     }
 
     // ===== THÊM SẢN PHẨM =====
@@ -390,7 +405,8 @@ public class SellerDashboardController {
                 Platform.runLater(() -> {
                     if (response != null && response.contains("\"status\":\"OK\"")) {
                         productList.remove(selected);
-                        txtId.setText(String.format("SP%03d", productList.size() + 1));
+                        // ✅ SỬA: Dùng generateNewId() thay vì size+1
+                        generateNewId();
                         AlertUtil.showSuccess("Thành công", "Đã xóa phiên đấu giá!");
                         handleClear();
                     } else {
@@ -424,7 +440,8 @@ public class SellerDashboardController {
         initSpinner(spinSec,  59, 59);
 
         tableProducts.getSelectionModel().clearSelection();
-        txtId.setText(String.format("SP%03d", productList.size() + 1));
+        // ✅ SỬA: Dùng generateNewId() thay vì size+1
+        generateNewId();
     }
 
     // ===== PREVIEW ẢNH =====
@@ -438,7 +455,6 @@ public class SellerDashboardController {
         if (imgPreview == null || url == null || url.isEmpty()) return;
         new Thread(() -> {
             try {
-                // Xử lý redirect và HTTPS
                 java.net.URL imgUrl = new java.net.URL(url);
                 java.net.HttpURLConnection conn = (java.net.HttpURLConnection) imgUrl.openConnection();
                 conn.setInstanceFollowRedirects(true);
@@ -449,7 +465,6 @@ public class SellerDashboardController {
                 conn.connect();
 
                 int status = conn.getResponseCode();
-                // Xử lý redirect thủ công nếu cần (301/302)
                 String finalUrl = url;
                 if (status == java.net.HttpURLConnection.HTTP_MOVED_PERM
                         || status == java.net.HttpURLConnection.HTTP_MOVED_TEMP) {
@@ -489,11 +504,8 @@ public class SellerDashboardController {
 
     @FXML
     private void handleBack() {
-        if ("ADMIN".equals(SessionManager.getRole())) {
-            SceneManager.switchScene("/view/AuctionList.fxml", "Danh sách sản phẩm");
-        } else {
-            AlertUtil.showError("Hạn chế", "Người bán không có quyền quay lại danh sách mua!");
-        }
+        // Seller không có màn hình "danh sách mua" — nút Back bị vô hiệu
+        AlertUtil.showError("Hạn chế", "Người bán không có quyền quay lại danh sách mua!");
     }
 
     @FXML

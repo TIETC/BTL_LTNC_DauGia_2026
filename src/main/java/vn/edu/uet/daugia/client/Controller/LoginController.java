@@ -49,7 +49,8 @@ public class LoginController {
 
                         switch (role) {
                             case "ADMIN":
-                                SceneManager.switchScene("/view/SellerDashboard.fxml",
+                                // ✅ SỬA: Admin được định tuyến sang AdminDashboard riêng
+                                SceneManager.switchScene("/view/AdminDashboard.fxml",
                                         "Admin - Quản trị hệ thống");
                                 break;
                             case "SELLER":

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="vn.edu.uet.daugia.client.Controller.AdminDashboardController">
+
+    <top>
+        <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #2c3e50;">
+            <Label text="🛡 Admin Dashboard" style="-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Đăng xuất" onAction="#handleLogout" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+        </HBox>
+    </top>
+
+    <center>
+        <TabPane>
+
+            <!-- TAB 1: THỐNG KÊ -->
+            <Tab text="📊 Thống kê" closable="false">
+                <VBox spacing="15" style="-fx-padding: 20;">
+                    <Button text="🔄 Làm mới" onAction="#handleRefreshStats"/>
+                    <GridPane hgap="20" vgap="10">
+                        <Label text="Tổng người dùng:" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                        <Label fx:id="lblTotalUsers" text="..." GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                        <Label text="Bidder:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                        <Label fx:id="lblTotalBidders" text="..." GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                        <Label text="Seller:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                        <Label fx:id="lblTotalSellers" text="..." GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                        <Label text="Tổng phiên:" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                        <Label fx:id="lblTotalAuctions" text="..." GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                        <Label text="Đang chạy:" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                        <Label fx:id="lblRunning" text="..." GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                        <Label text="Đã kết thúc:" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                        <Label fx:id="lblFinished" text="..." GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                        <Label text="Đã hủy:" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+                        <Label fx:id="lblCanceled" text="..." GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                    </GridPane>
+                </VBox>
+            </Tab>
+
+            <!-- TAB 2: PHIÊN ĐẤU GIÁ -->
+            <Tab text="🏷 Phiên đấu giá" closable="false">
+                <VBox spacing="8" style="-fx-padding: 10;">
+                    <HBox spacing="8">
+                        <Button text="🔄 Làm mới" onAction="#handleRefreshAuctions"/>
+                        <Button text="⏹ Hủy phiên" onAction="#handleCancelAuction" style="-fx-background-color: #e67e22; -fx-text-fill: white;"/>
+                        <Button text="🗑 Xóa phiên" onAction="#handleDeleteAuction" style="-fx-background-color: #e74c3c; -fx-text-fill: white;"/>
+                    </HBox>
+                    <TableView fx:id="tblAuctions" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colAucId"     text="ID"            prefWidth="120"/>
+                            <TableColumn fx:id="colAucName"   text="Tên sản phẩm" prefWidth="180"/>
+                            <TableColumn fx:id="colAucSeller" text="Người bán"     prefWidth="100"/>
+                            <TableColumn fx:id="colAucPrice"  text="Giá hiện tại"  prefWidth="130"/>
+                            <TableColumn fx:id="colAucStatus" text="Trạng thái"    prefWidth="100"/>
+                            <TableColumn fx:id="colAucStart"  text="Bắt đầu"      prefWidth="150"/>
+                            <TableColumn fx:id="colAucEnd"    text="Kết thúc"     prefWidth="150"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </Tab>
+
+        </TabPane>
+    </center>
+
+</BorderPane>

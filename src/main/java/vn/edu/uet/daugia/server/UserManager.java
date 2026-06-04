@@ -2,11 +2,18 @@ package vn.edu.uet.daugia.server;
 
 import vn.edu.uet.daugia.database.DatabaseConnection;
 import vn.edu.uet.daugia.shared.model.user.Bidder;
+import vn.edu.uet.daugia.shared.model.user.UserFactoryProvider;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+/**
+ * UserManager – tra cứu thông tin người dùng từ DB.
+ *
+ * Cập nhật: dùng {@link UserFactoryProvider} thay vì gọi trực tiếp
+ * {@code new Bidder(…)}, đảm bảo tuân thủ Factory Method Pattern.
+ */
 public class UserManager {
 
     public static Bidder findBidder(String bidderId) {
@@ -17,7 +24,8 @@ public class UserManager {
             if (conn == null) return fallback(bidderId);
 
             PreparedStatement ps = conn.prepareStatement(
-                    "SELECT username, email, password FROM users WHERE username = ? AND role = 'BIDDER'");
+                    "SELECT username, email, password, balance " +
+                            "FROM users WHERE username = ? AND role = 'BIDDER'");
             ps.setString(1, bidderId);
             ResultSet rs = ps.executeQuery();
 
@@ -25,11 +33,11 @@ public class UserManager {
                 String username = rs.getString("username");
                 String email    = rs.getString("email") != null ? rs.getString("email") : username + "@local";
                 String password = rs.getString("password") != null ? rs.getString("password") : "";
-
-                double balance = 1_000_000;
+                double balance  = 1_000_000;
                 try { balance = rs.getDouble("balance"); } catch (Exception ignored) {}
 
-                return new Bidder(username, email, password, balance);
+                // ← Factory Method
+                return UserFactoryProvider.createBidder(username, email, password, balance);
             }
             return null;
 
@@ -41,6 +49,7 @@ public class UserManager {
 
     private static Bidder fallback(String bidderId) {
         System.err.println("[UserManager] Fallback cho bidder: " + bidderId);
-        return new Bidder(bidderId, bidderId + "@local", "", 1_000_000);
+        // ← Factory Method
+        return UserFactoryProvider.createBidder(bidderId, bidderId + "@local", "", 1_000_000);
     }
 }

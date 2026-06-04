@@ -61,4 +61,10 @@ module vn.edu.uet.daugia {
     exports vn.edu.uet.daugia.client.network;
 
     exports vn.edu.uet.daugia.client.util;
+
+    opens vn.edu.uet.daugia.shared.model.item to com.google.gson;
+    exports vn.edu.uet.daugia.shared.model.item;
+
+    opens vn.edu.uet.daugia.shared.model.user to com.google.gson;
+    exports vn.edu.uet.daugia.shared.model.user;
 }
