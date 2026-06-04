@@ -277,7 +277,7 @@ Mở thêm terminal và lặp lại Bước 3. Mỗi terminal là một Client �
 | 26 | **Concurrent Bidding an toàn:** `placeBid()` dùng `ReentrantLock` — chống race condition, lost update, đảm bảo chỉ 1 người thắng | ✅ Hoàn thành |
 | 27 | **LAN Auto-Discovery:** Client tự dò IP Server qua UDP Broadcast (`255.255.255.255:8888`), không cần cấu hình IP thủ công | ✅ Hoàn thành |
 | 28 | **Persistent State Recovery:** Server khởi động lại tự nạp lại các phiên RUNNING từ MySQL vào RAM, không mất dữ liệu | ✅ Hoàn thành |
-| 29 | **Anti- sniping:** Phiên đấu giá còn 60s mà có bidder đặt giá thì phiên tự động gia hạn 60s | Hoàn thành | 
+| 29 | **Anti- sniping:** Phiên đấu giá còn 60s mà có bidder đặt giá thì phiên tự động gia hạn 60s | ✅ Hoàn thành | 
 
 ---
 
@@ -285,9 +285,9 @@ Mở thêm terminal và lặp lại Bước 3. Mỗi terminal là một Client �
 
 | Mục | Link |
 |---|---|
-| 📄 Báo cáo PDF | *[Thêm link tại đây]* |
-| 🎥 Video Demo | *[Thêm link tại đây]* |
-| 📁 Repository | *[Thêm link GitHub tại đây]* |
+| 📄 Báo cáo PDF | *https://drive.google.com/file/d/1gai3pOukyVZLJmf_MT-TjtoRk9xhDgj7/view?usp=sharing* |
+| 🎥 Video Demo | *https://drive.google.com/file/d/1lksDHLohoerZCNp5-cABZ0k9cv9kAS2Q/view?usp=sharing* |
+| 📁 Repository | *https://github.com/TIETC/BTL_LTNC_DauGia_2026.git* |
 
 ---
 
@@ -295,7 +295,7 @@ Mở thêm terminal và lặp lại Bước 3. Mỗi terminal là một Client �
 
 | Họ tên | MSSV |
 |---|---|
-| *Dương Đăng Tuấn* | *25021989*
+| *Dương Đăng Tuấn* | *25021989* |
 | *Phạm Thành Trung* | *25022034* |
 | *Trần Anh Tuấn* | *25021997* | 
 | *Hoàng Anh Quân* | *25021957* |
