@@ -280,7 +280,7 @@ mvn test -Dsurefire.useFile=false
 ### Chức năng bắt buộc
 
 | # | Chức năng | Trạng thái |
-|---|---|---|
+|---|---|
 | 1 | Đăng ký tài khoản (Bidder / Seller) ✅ 
 | 2 | Đăng nhập, phân quyền theo vai trò ✅ 
 | 3 | Seller: Tạo phiên đấu giá (tên, mô tả, giá khởi điểm, thời gian, ảnh URL, giá mua đứt) ✅
@@ -302,7 +302,7 @@ mvn test -Dsurefire.useFile=false
 ### Chức năng nâng cao
 
 | # | Chức năng | Trạng thái |
-|---|---|---|
+|---|---|
 | 18 | **Realtime Update (Observer Pattern):** Mỗi `ClientHandler` là một `AuctionObserver` — khi có bid mới, server push JSON `NEW_BID` tới **tất cả** client đang kết nối ngay lập tức, không cần polling ✅
 | 19 | **Bid History Visualization:** Biểu đồ đường (JavaFX `LineChart`) hiển thị giá đấu theo thời gian thực trong phòng đấu giá ✅
 | 20 | **Concurrent Bidding an toàn:** `placeBid()` dùng `ReentrantLock` — chống race condition, lost update, đảm bảo chỉ 1 người thắng ✅
