@@ -90,9 +90,9 @@ CREATE TABLE bids (
     price DOUBLE NOT NULL,
     bidTime DATETIME NOT NULL
 );
-
+```
 ### Bước 2: Cấu hình kết nối
-
+```
 Mở file src/vn/edu/uet/daugia/database/DatabaseConnection.java, kiểm tra và cấu hình lại thông tin đăng nhập MySQL cho khớp với máy của thầy/cô:
 
 private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
