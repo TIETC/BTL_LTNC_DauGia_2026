@@ -70,7 +70,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.example.login.Launcher</mainClass>
+                            <mainClass>vn.edu.uet.daugia.client.ui.login.Launcher</mainClass>
                         </configuration>
                     </execution>
                 </executions>
