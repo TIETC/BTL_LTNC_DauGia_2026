@@ -13,61 +13,74 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Auction extends Entity {
-    private Item item;              // Sản phẩm đang được đấu giá
-    private Seller seller;          // Người đăng bán
-    private double currentPrice;    // Giá cao nhất hiện tại
-    private Bidder currentLeader;   // Người đang dẫn đầu
+    private Item item;
+    private Seller seller;
+    private double currentPrice;
+    private Bidder currentLeader;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private AuctionStatus status;
-    private List<BidTransaction> bidHistory; // Lịch sử tất cả lần đặt giá
-    private LocalDateTime lastBidTime;       // Thời điểm bid mới nhất (push realtime)
-    private String lastBidderName;           // Người đặt bid mới nhất
+    private List<BidTransaction> bidHistory;
+    private LocalDateTime lastBidTime;
+    private String lastBidderName;
 
-    // Lock để xử lý đồng thời — chống Race Condition
+    // Anti-sniping: bid trong 60s cuối → gia hạn thêm 60s
+    private static final int ANTI_SNIPE_THRESHOLD_SECONDS = 60;
+    private static final int ANTI_SNIPE_EXTENSION_SECONDS = 60;
+
     private final ReentrantLock lock = new ReentrantLock();
 
     public Auction(Item item, Seller seller,
                    double startingPrice,
                    LocalDateTime startTime,
                    LocalDateTime endTime) {
-        super(); // sinh id, createdAt từ Entity
+        super();
         this.item = item;
         this.seller = seller;
         this.currentPrice = startingPrice;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.status = AuctionStatus.OPEN; // mới tạo mặc định = OPEN
+        this.status = AuctionStatus.OPEN;
         this.bidHistory = new ArrayList<>();
     }
+
     /**
-     * Người dùng đặt giá. Phải thread-safe vì nhiều người gọi đồng thời.
+     * Đặt giá — thread-safe.
+     * Trả về true nếu phiên được gia hạn (anti-sniping), false nếu không.
      */
-    public void placeBid(Bidder bidder, double amount) {
-        lock.lock(); // Khóa lại — chỉ 1 thread vào được tại 1 thời điểm
+    public boolean placeBid(Bidder bidder, double amount) {
+        lock.lock();
         try {
-            // Kiểm tra 1: phiên có đang chạy không?
             if (status != AuctionStatus.RUNNING) {
                 throw new AuctionClosedException("Phiên đấu giá không còn nhận bid. Trạng thái: " + status);
             }
-
-            // Kiểm tra 2: giá đặt có cao hơn giá hiện tại không?
             if (amount <= currentPrice) {
-                throw new InvalidBidException("Giá phải cao hơn " + currentPrice + ". Bạn đặt: " + amount);
+                throw new InvalidBidException(String.format(
+                        "Giá phải cao hơn %,.0f VNĐ. Bạn đặt: %,.0f VNĐ", currentPrice, amount));
             }
-            // Hợp lệ — cập nhật thông tin
-            this.currentPrice = amount;
-            this.currentLeader = bidder;
-            this.lastBidTime = LocalDateTime.now();
+
+            this.currentPrice   = amount;
+            this.currentLeader  = bidder;
+            this.lastBidTime    = LocalDateTime.now();
             this.lastBidderName = bidder.getUsername();
 
-            // Tạo bản ghi giao dịch
             BidTransaction tx = new BidTransaction(bidder, this, amount);
             bidHistory.add(tx);
 
             System.out.println("[BID] " + bidder.getUsername() + " đặt " + amount + " | Phiên: " + item.getName());
+
+            // ===== ANTI-SNIPING =====
+            long secondsLeft = java.time.Duration.between(LocalDateTime.now(), endTime).getSeconds();
+            if (secondsLeft > 0 && secondsLeft <= ANTI_SNIPE_THRESHOLD_SECONDS) {
+                endTime = endTime.plusSeconds(ANTI_SNIPE_EXTENSION_SECONDS);
+                System.out.printf("[ANTI-SNIPE] Phiên %s gia hạn thêm %ds → kết thúc lúc %s%n",
+                        item.getId(), ANTI_SNIPE_EXTENSION_SECONDS, endTime);
+                return true;
+            }
+            return false;
+
         } finally {
-            lock.unlock(); // LUÔN LUÔN mở khóa dù có lỗi hay không
+            lock.unlock();
         }
     }
 
@@ -77,19 +90,12 @@ public class Auction extends Entity {
         System.out.println("[START] Phiên đấu giá bắt đầu: " + item.getName());
     }
 
-    /** Khôi phục giá / người dẫn sau khi nạp phiên từ database. */
     public void applyRestoredState(double price, Bidder leader) {
         lock.lock();
         try {
-            if (price > currentPrice) {
-                currentPrice = price;
-            }
-            if (leader != null) {
-                currentLeader = leader;
-            }
-            if (status == AuctionStatus.OPEN) {
-                status = AuctionStatus.RUNNING;
-            }
+            if (price > currentPrice) currentPrice = price;
+            if (leader != null) currentLeader = leader;
+            if (status == AuctionStatus.OPEN) status = AuctionStatus.RUNNING;
         } finally {
             lock.unlock();
         }
@@ -103,7 +109,7 @@ public class Auction extends Entity {
                 status = AuctionStatus.FINISHED;
                 System.out.println("[END] Người thắng: " + currentLeader.getUsername() + " | Giá: " + currentPrice);
             } else {
-                status = AuctionStatus.CANCELED; // không ai đặt giá
+                status = AuctionStatus.CANCELED;
             }
         } finally {
             lock.unlock();
@@ -114,30 +120,28 @@ public class Auction extends Entity {
         return (status == AuctionStatus.FINISHED) ? currentLeader : null;
     }
 
-    // Tự động đóng phiên bằng ScheduledExecutorService
     public void scheduleAutoClose() {
         long delay = java.time.Duration.between(LocalDateTime.now(), endTime).toMillis();
-        if (delay <= 0) {
-            closeAuction(); //  đóng ngay
-            return;
-        }
-        java.util.concurrent.ScheduledExecutorService scheduler = java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
-        scheduler.schedule(() -> {
-            closeAuction();
-            scheduler.shutdown();
-        }, delay, java.util.concurrent.TimeUnit.MILLISECONDS);
+        if (delay <= 0) { closeAuction(); return; }
+        java.util.concurrent.ScheduledExecutorService scheduler =
+                java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+        scheduler.schedule(() -> { closeAuction(); scheduler.shutdown(); },
+                delay, java.util.concurrent.TimeUnit.MILLISECONDS);
     }
-    public double getCurrentPrice()          { return currentPrice; }
-    public Bidder getCurrentLeader()         { return currentLeader; }
-    public AuctionStatus getStatus()         { return status; }
-    public Item getItem()                    { return item; }
+
+    public double getCurrentPrice()             { return currentPrice; }
+    public Bidder getCurrentLeader()            { return currentLeader; }
+    public AuctionStatus getStatus()            { return status; }
+    public Item getItem()                       { return item; }
+    public LocalDateTime getEndTime()           { return endTime; }
     public List<BidTransaction> getBidHistory() { return bidHistory; }
 
     @Override
     public String getInfo() {
-        return String.format("[Auction] %s | Giá: %.0f | Trạng thái: %s", item.getName(), currentPrice, status);
+        return String.format("[Auction] %s | Giá: %.0f | Trạng thái: %s",
+                item.getName(), currentPrice, status);
     }
-    // Thêm vào dưới cùng class Auction.java
+
     public String toJson() {
         String leaderName = (currentLeader != null) ? currentLeader.getUsername() : "";
         String bidTimeStr = (lastBidTime != null) ? lastBidTime.toString() : "";
@@ -145,9 +149,9 @@ public class Auction extends Entity {
         return String.format(
                 "{\"id\":\"%s\",\"itemId\":\"%s\",\"itemName\":\"%s\",\"currentPrice\":%.0f,"
                         + "\"currentLeader\":\"%s\",\"leader\":\"%s\",\"lastBidder\":\"%s\","
-                        + "\"bidTime\":\"%s\",\"status\":\"%s\"}",
+                        + "\"bidTime\":\"%s\",\"status\":\"%s\",\"endTime\":\"%s\"}",
                 getId(), item.getId(), item.getName(), currentPrice,
-                leaderName, leaderName, lastBidder, bidTimeStr, status.name()
-        );
+                leaderName, leaderName, lastBidder, bidTimeStr, status.name(),
+                endTime.toString());
     }
 }

@@ -174,12 +174,10 @@ public class BiddingRoomController {
         }
     }
 
-    /** Chỉ gọi từ NEW_BID push listener để tránh cập nhật 2 lần */
     private void appendBidEntry(String bidder, String bidTimeIso, double price) {
         String tableTime = formatTableTime(bidTimeIso);
         String chartTime = toChartTimeLabel(tableTime);
 
-        // Bỏ qua nếu trùng hoàn toàn với entry mới nhất
         if (!bidHistoryRows.isEmpty()) {
             BidHistoryRow top = bidHistoryRows.get(0);
             if (top.getPrice() == price
@@ -226,9 +224,7 @@ public class BiddingRoomController {
     static String convertImageUrl(String rawUrl) {
         if (rawUrl == null || rawUrl.trim().isEmpty()) return rawUrl;
         rawUrl = rawUrl.trim();
-
         if (rawUrl.contains("i.imgur.com")) return rawUrl;
-
         if (rawUrl.matches("https?://imgur\\.com/[a-zA-Z0-9]+")) {
             String id = rawUrl.replaceAll(".*/([a-zA-Z0-9]+)$", "$1");
             return "https://i.imgur.com/" + id + ".jpg";
@@ -332,6 +328,7 @@ public class BiddingRoomController {
                     String bidTime  = data.has("bidTime") ? data.get("bidTime").getAsString() : "";
 
                     Platform.runLater(() -> appendBidEntry(leader, bidTime, newPrice));
+
                 } catch (Exception e) {
                     System.err.println("Lỗi xử lý NEW_BID: " + e.getMessage());
                 }
@@ -346,8 +343,40 @@ public class BiddingRoomController {
                     double finalPrice = json.has("finalPrice") ? json.get("finalPrice").getAsDouble() : 0;
 
                     Platform.runLater(() -> handleAuctionEnded(status, winner, finalPrice, null));
+
                 } catch (Exception e) {
                     System.err.println("Lỗi xử lý AUCTION_CLOSED: " + e.getMessage());
+                }
+
+            } else if ("AUCTION_EXTENDED".equals(type)) {
+                // ===== ANTI-SNIPING: cập nhật đồng hồ đếm ngược =====
+                try {
+                    String auctionId = json.has("auctionId") ? json.get("auctionId").getAsString() : "";
+                    if (currentProduct == null || !auctionId.equals(currentProduct.getId())) return;
+
+                    String newEndTimeStr = json.get("newEndTime").getAsString();
+                    LocalDateTime newEndTime = LocalDateTime.parse(newEndTimeStr);
+
+                    Platform.runLater(() -> {
+                        // Cập nhật endTime của product → đồng hồ tự đọc lại mỗi giây
+                        currentProduct = new Product(
+                                currentProduct.getId(),
+                                currentProduct.getName(),
+                                currentProduct.getStatus(),
+                                currentProduct.getStartPrice(),
+                                currentProduct.getCurrentPrice(),
+                                currentProduct.getMaxPrice(),
+                                currentProduct.getDescription(),
+                                currentProduct.getImageUrl(),
+                                currentProduct.getStartTime(),
+                                newEndTime);
+                        currentProduct.setLeader(currentProduct.getLeader());
+                        AlertUtil.showSuccess("⏱ Phiên được gia hạn!",
+                                "Có bid mới trong 60 giây cuối.\nPhiên được gia hạn thêm 60 giây!");
+                    });
+
+                } catch (Exception e) {
+                    System.err.println("Lỗi xử lý AUCTION_EXTENDED: " + e.getMessage());
                 }
             }
         });
@@ -391,7 +420,6 @@ public class BiddingRoomController {
         btnBid.setDisable(true);
         txtBidAmount.setDisable(true);
 
-        // Dọn dẹp listener để không tranh chấp socket khi vào phòng khác
         NetworkClient.getInstance().clearPushListener();
 
         currentProduct.setStatus(status);
@@ -432,7 +460,6 @@ public class BiddingRoomController {
             String input = txtBidAmount.getText().trim();
             if (input.isEmpty()) return;
 
-            // Cho phép nhập số có dấu phẩy (VD: 1,000,000)
             double bidPrice = Double.parseDouble(input.replace(",", ""));
             double minPrice = getEffectiveCurrentPrice();
 
@@ -467,7 +494,6 @@ public class BiddingRoomController {
                             String     respStatus = resp.get("status").getAsString();
 
                             if ("OK".equals(respStatus)) {
-                                // Bid thành công — để NEW_BID push cập nhật chart
                                 txtBidAmount.clear();
 
                             } else if ("BUYOUT".equals(respStatus)) {
@@ -476,14 +502,12 @@ public class BiddingRoomController {
                                 String msg = resp.has("message")
                                         ? resp.get("message").getAsString()
                                         : String.format("Chúc mừng! Bạn đã mua đứt với giá %,.0f VNĐ!", newPrice);
-                                // Tự cập nhật vì server đóng phiên rồi, NEW_BID push có thể không đến
                                 appendBidEntry(bidderId,
                                         LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
                                         newPrice);
                                 handleAuctionEnded("FINISHED", bidderId, newPrice, msg);
 
                             } else {
-                                // Lấy message từ server, format giá đẹp nếu có
                                 String msg = resp.has("message")
                                         ? formatServerMessage(resp.get("message").getAsString())
                                         : "Đặt giá không thành công!";
@@ -506,11 +530,6 @@ public class BiddingRoomController {
         }
     }
 
-    /**
-     * Format lại message từ server: nếu có số dạng scientific notation thì chuyển sang VNĐ đẹp.
-     * VD: "Giá phải cao hơn 1.99999E11. Bạn đặt: 11.0"
-     *   → "Giá phải cao hơn 200,000,000,000 VNĐ. Bạn đặt: 11 VNĐ"
-     */
     private String formatServerMessage(String msg) {
         if (msg == null) return "";
         try {

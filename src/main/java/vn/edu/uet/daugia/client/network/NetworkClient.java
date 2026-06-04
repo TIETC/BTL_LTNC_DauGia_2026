@@ -71,7 +71,8 @@ public class NetworkClient {
                             if (type.equals("NEW_AUCTION")
                                     || type.equals("NEW_BID")
                                     || type.equals("AUCTION_CLOSED")
-                                    || type.equals("AUCTION_DELETED")) {
+                                    || type.equals("AUCTION_DELETED")
+                                    || type.equals("AUCTION_EXTENDED")) {
                                 isPush = true;
                                 if (pushListener != null) {
                                     pushListener.onPush(type, json);
