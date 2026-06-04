@@ -1,9 +1,4 @@
-## Hệ Thống Đấu Giá Trực Tuyến - Nhóm 9 
-
-> Đại học Công nghệ, ĐHQGHN  
-> Xây dựng hệ thống đấu giá trực tuyến theo kiến trúc Client–Server, tương tự mô hình eBay Auctions.
-
----
+## Hệ thống đấu giá trực tuyến - Nhóm 9 
 
 ## 📋 Mô tả bài toán & Phạm vi hệ thống
 
@@ -275,67 +270,66 @@ mvn test -Dsurefire.useFile=false
 
 ---
 
-## ✅ Danh sách chức năng đã 
+## ✅ Danh sách chức năng đã hoàn thành
 
 ### Chức năng bắt buộc
 
 | # | Chức năng | Trạng thái |
-|---|---|
-| 1 | Đăng ký tài khoản (Bidder / Seller) ✅ 
-| 2 | Đăng nhập, phân quyền theo vai trò ✅ 
-| 3 | Seller: Tạo phiên đấu giá (tên, mô tả, giá khởi điểm, thời gian, ảnh URL, giá mua đứt) ✅
-| 4 | Seller: Sửa thông tin phiên đang RUNNING ✅
-| 5 | Seller: Xóa phiên đấu giá ✅
-| 6 | Seller Dashboard: Xem tất cả phiên đã tạo (mọi trạng thái) kèm người dẫn đầu / người thắng ✅
-| 7 | Bidder: Xem danh sách phiên đang RUNNING ✅
-| 8 | Bidder: Xem chi tiết sản phẩm ✅
-| 9 | Bidder: Đặt giá — kiểm tra hợp lệ (phải cao hơn giá hiện tại) ✅ 
-| 10 | Bidder: Mua đứt sản phẩm khi đặt giá đạt `max_price` ✅ 
-| 11 | Tự động đóng phiên khi hết thời gian (scheduler quét 10 giây/lần)✅
-| 12 | Xác định người thắng → FINISHED; không có bid → CANCELED ✅ 
-| 13 | Vòng đời phiên: OPEN → RUNNING → FINISHED / CANCELED ✅ 
-| 14 | Xử lý ngoại lệ: `InvalidBidException`, `AuctionClosedException`, `AuthenticationException` ✅
-| 15 | Kiến trúc Client–Server qua TCP Socket, dữ liệu JSON ✅
-| 16 | Client MVC: JavaFX + FXML Controller ✅
-| 17 | Server MVC: ClientHandler → AuctionService → DatabaseConnection ✅
+|---|---|---|
+| 1 | Đăng ký tài khoản (Bidder / Seller) | ✅ Hoàn thành |
+| 2 | Đăng nhập, phân quyền theo vai trò | ✅ Hoàn thành |
+| 3 | Seller: Tạo phiên đấu giá (tên, mô tả, giá khởi điểm, thời gian, ảnh URL, giá mua đứt) | ✅ Hoàn thành |
+| 4 | Seller: Sửa thông tin phiên đang RUNNING | ✅ Hoàn thành |
+| 5 | Seller: Xóa phiên đấu giá | ✅ Hoàn thành |
+| 6 | Seller Dashboard: Xem tất cả phiên đã tạo (mọi trạng thái) kèm người dẫn đầu / người thắng | ✅ Hoàn thành |
+| 7 | Bidder: Xem danh sách phiên đang RUNNING | ✅ Hoàn thành |
+| 8 | Bidder: Xem chi tiết sản phẩm | ✅ Hoàn thành |
+| 9 | Bidder: Đặt giá — kiểm tra hợp lệ (phải cao hơn giá hiện tại) | ✅ Hoàn thành |
+| 10 | Bidder: Mua đứt sản phẩm khi đặt giá đạt `max_price` | ✅ Hoàn thành |
+| 11 | Tự động đóng phiên khi hết thời gian (scheduler quét 10 giây/lần) | ✅ Hoàn thành |
+| 12 | Xác định người thắng → FINISHED; không có bid → CANCELED | ✅ Hoàn thành |
+| 13 | Vòng đời phiên: OPEN → RUNNING → FINISHED / CANCELED | ✅ Hoàn thành |
+| 14 | Xử lý ngoại lệ: `InvalidBidException`, `AuctionClosedException`, `AuthenticationException` | ✅ Hoàn thành |
+| 15 | Kiến trúc Client–Server qua TCP Socket, dữ liệu JSON | ✅ Hoàn thành |
+| 16 | Client MVC: JavaFX + FXML Controller | ✅ Hoàn thành |
+| 17 | Server MVC: ClientHandler → AuctionService → DatabaseConnection | ✅ Hoàn thành |
 
 ### Chức năng nâng cao
 
 | # | Chức năng | Trạng thái |
-|---|---|
-| 18 | **Realtime Update (Observer Pattern):** Mỗi `ClientHandler` là một `AuctionObserver` — khi có bid mới, server push JSON `NEW_BID` tới **tất cả** client đang kết nối ngay lập tức, không cần polling ✅
-| 19 | **Bid History Visualization:** Biểu đồ đường (JavaFX `LineChart`) hiển thị giá đấu theo thời gian thực trong phòng đấu giá ✅
-| 20 | **Concurrent Bidding an toàn:** `placeBid()` dùng `ReentrantLock` — chống race condition, lost update, đảm bảo chỉ 1 người thắng ✅
-| 21 | **LAN Auto-Discovery:** Client tự dò IP Server qua UDP Broadcast (`255.255.255.255:8888`), không cần cấu hình IP thủ công ✅
-| 22 | **Persistent State Recovery:** Server khởi động lại tự nạp lại các phiên RUNNING từ MySQL vào RAM, không mất dữ liệu ✅ 
-
+|---|---|---|
+| 18 | **Realtime Update (Observer Pattern):** Mỗi `ClientHandler` là một `AuctionObserver` — khi có bid mới, server push JSON `NEW_BID` tới **tất cả** client đang kết nối ngay lập tức, không cần polling | ✅ Hoàn thành |
+| 19 | **Bid History Visualization:** Biểu đồ đường (JavaFX `LineChart`) hiển thị giá đấu theo thời gian thực trong phòng đấu giá | ✅ Hoàn thành |
+| 20 | **Concurrent Bidding an toàn:** `placeBid()` dùng `ReentrantLock` — chống race condition, lost update, đảm bảo chỉ 1 người thắng | ✅ Hoàn thành |
+| 21 | **LAN Auto-Discovery:** Client tự dò IP Server qua UDP Broadcast (`255.255.255.255:8888`), không cần cấu hình IP thủ công | ✅ Hoàn thành |
+| 22 | **Persistent State Recovery:** Server khởi động lại tự nạp lại các phiên RUNNING từ MySQL vào RAM, không mất dữ liệu | ✅ Hoàn thành |
 
 ---
 
-## Tài nguyên
+## 📎 Tài nguyên
 
 | Mục | Link |
 |---|---|
-| 📄 Báo cáo PDF | *[]* |
-| 🎥 Video Demo | *[]* |
-| 📁 Repository | *[]* |
+| 📄 Báo cáo PDF | *[Thêm link tại đây]* |
+| 🎥 Video Demo | *[Thêm link tại đây]* |
+| 📁 Repository | *[Thêm link GitHub tại đây]* |
 
 ---
 
-## Thành viên nhóm
+## 👨‍💻 Thành viên nhóm
 
 | Họ tên | MSSV |
 |---|---|
-| *(Dương Đăng Tuấn)* | *(25021989)* |
-| *(Phạm Thành Trung)* | *(25022034)* | 
+| *(Dương Đăng Tuấn)* | *(25021989)*
+| *(Phạm Thành Trung)* | *(25022034)* |
 | *(Trần Anh Tuấn)* | *(25021997)* | 
 | *(Hoàng Anh Quân)* | *(25021957)* |
+
 ---
 
-## Lưu ý khi chạy
+## ⚠️ Lưu ý khi chạy
 
 - **Firewall:** Trên Windows, khi chạy Server lần đầu, Windows Firewall có thể hỏi quyền truy cập mạng — hãy cho phép cả mạng riêng (private) lẫn mạng công cộng (public) để LAN Discovery hoạt động đúng.
 - **Cùng mạng LAN:** Client và Server phải kết nối vào cùng một mạng Wi-Fi hoặc LAN. Nếu chạy cùng máy, Client tự fallback về `127.0.0.1`.
 - **Cổng:** Đảm bảo cổng `5000` (TCP) và `8888` (UDP) không bị chặn hoặc đang được dùng bởi ứng dụng khác.
 - **Database:** Server **phải** kết nối được MySQL trước khi Client đăng nhập. Nếu MySQL chưa chạy, Server vẫn khởi động nhưng mọi thao tác đăng nhập/đấu giá sẽ thất bại.
-  
