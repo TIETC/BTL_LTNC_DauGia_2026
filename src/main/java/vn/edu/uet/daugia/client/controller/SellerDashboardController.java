@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.client.Controller;
+package vn.edu.uet.daugia.client.controller;
 
 import vn.edu.uet.daugia.client.model.Product;
 import vn.edu.uet.daugia.client.util.AlertUtil;
@@ -16,7 +16,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import java.time.LocalDateTime;

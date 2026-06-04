@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.client.Controller;
+package vn.edu.uet.daugia.client.controller;
 
 import vn.edu.uet.daugia.client.network.NetworkClient;
 import vn.edu.uet.daugia.client.util.AppState;

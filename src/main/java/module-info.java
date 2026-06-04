@@ -40,9 +40,9 @@ module vn.edu.uet.daugia {
     // CLIENT CONTROLLER
     // =========================
 
-    exports vn.edu.uet.daugia.client.Controller;
+    exports vn.edu.uet.daugia.client.controller;
 
-    opens vn.edu.uet.daugia.client.Controller
+    opens vn.edu.uet.daugia.client.controller
             to javafx.fxml;
 
     // =========================

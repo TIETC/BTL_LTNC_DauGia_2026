@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.server;
+package vn.edu.uet.daugia.server.controller;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.server;
+package vn.edu.uet.daugia.server.service;
 
 import vn.edu.uet.daugia.shared.model.Auction;
 import vn.edu.uet.daugia.shared.model.item.Electronics;

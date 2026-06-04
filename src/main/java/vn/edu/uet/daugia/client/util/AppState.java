@@ -1,6 +1,6 @@
 package vn.edu.uet.daugia.client.util;
 
-import vn.edu.uet.daugia.client.Controller.AuctionListController;
+import vn.edu.uet.daugia.client.controller.AuctionListController;
 import vn.edu.uet.daugia.client.network.NetworkClient;
 
 /**

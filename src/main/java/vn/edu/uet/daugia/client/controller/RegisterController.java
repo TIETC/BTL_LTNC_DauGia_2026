@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.client.Controller;
+package vn.edu.uet.daugia.client.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -17,7 +17,6 @@ import java.io.IOException;
 import vn.edu.uet.daugia.client.network.NetworkClient;
 import vn.edu.uet.daugia.shared.model.RegisterMessage;
 import com.google.gson.Gson;
-import vn.edu.uet.daugia.client.util.SceneManager; // Đảm bảo dùng SceneManager cho đồng bộ
 
 public class RegisterController {
 

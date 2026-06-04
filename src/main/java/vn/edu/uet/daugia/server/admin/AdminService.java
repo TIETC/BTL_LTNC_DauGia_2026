@@ -1,8 +1,8 @@
 package vn.edu.uet.daugia.server.admin;
 
-import vn.edu.uet.daugia.database.DatabaseConnection;
-import vn.edu.uet.daugia.server.AuctionManager;
-import vn.edu.uet.daugia.server.AuctionService;
+import vn.edu.uet.daugia.server.dao.DatabaseConnection;
+import vn.edu.uet.daugia.server.service.AuctionManager;
+import vn.edu.uet.daugia.server.service.AuctionService;
 import vn.edu.uet.daugia.shared.model.Auction;
 
 import java.sql.Connection;

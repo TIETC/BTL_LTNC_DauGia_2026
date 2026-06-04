@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
-            fx:controller="vn.edu.uet.daugia.client.Controller.AdminDashboardController">
+            fx:controller="vn.edu.uet.daugia.client.controller.AdminDashboardController">
 
     <top>
         <HBox spacing="10" style="-fx-padding: 10; -fx-background-color: #2c3e50;">

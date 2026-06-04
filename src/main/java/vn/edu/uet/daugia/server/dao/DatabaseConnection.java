@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.database;
+package vn.edu.uet.daugia.server.dao;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.server;
+package vn.edu.uet.daugia.server.controller;
 
 import java.net.Socket;
 import java.io.BufferedReader;
@@ -11,12 +11,14 @@ import java.sql.ResultSet;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import vn.edu.uet.daugia.server.service.AuctionManager;
+import vn.edu.uet.daugia.server.service.AuctionObserver;
+import vn.edu.uet.daugia.server.service.AuctionService;
 import vn.edu.uet.daugia.server.admin.AdminHandler;
 import vn.edu.uet.daugia.shared.model.Auction;
 import vn.edu.uet.daugia.shared.model.RegisterMessage;
 import vn.edu.uet.daugia.shared.model.LoginMessage;
 import vn.edu.uet.daugia.shared.model.item.ItemFactoryProvider;
-import vn.edu.uet.daugia.shared.model.item.ItemType;
 import vn.edu.uet.daugia.shared.model.user.Seller;
 import vn.edu.uet.daugia.shared.model.user.UserFactoryProvider;
 
@@ -24,7 +26,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-import vn.edu.uet.daugia.database.DatabaseConnection;
+import vn.edu.uet.daugia.server.dao.DatabaseConnection;
 
 /**
  * ClientHandler – xử lý từng kết nối TCP của một client.

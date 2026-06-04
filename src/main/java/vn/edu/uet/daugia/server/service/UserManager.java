@@ -1,6 +1,6 @@
-package vn.edu.uet.daugia.server;
+package vn.edu.uet.daugia.server.service;
 
-import vn.edu.uet.daugia.database.DatabaseConnection;
+import vn.edu.uet.daugia.server.dao.DatabaseConnection;
 import vn.edu.uet.daugia.shared.model.user.Bidder;
 import vn.edu.uet.daugia.shared.model.user.UserFactoryProvider;
 

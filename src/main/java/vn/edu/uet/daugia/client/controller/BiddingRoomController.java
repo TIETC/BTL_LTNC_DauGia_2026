@@ -1,4 +1,4 @@
-package vn.edu.uet.daugia.client.Controller;
+package vn.edu.uet.daugia.client.controller;
 
 import vn.edu.uet.daugia.client.model.BidHistoryRow;
 import vn.edu.uet.daugia.client.model.Product;

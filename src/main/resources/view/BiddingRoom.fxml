@@ -11,7 +11,7 @@
 <VBox spacing="15.0" prefWidth="900.0" prefHeight="700.0"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="vn.edu.uet.daugia.client.Controller.BiddingRoomController">
+      fx:controller="vn.edu.uet.daugia.client.controller.BiddingRoomController">
     <padding>
         <Insets bottom="20.0" left="25.0" right="25.0" top="15.0" />
     </padding>

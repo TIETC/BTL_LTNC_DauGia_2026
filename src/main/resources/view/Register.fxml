@@ -6,7 +6,7 @@
 <?import javafx.collections.FXCollections?>
 <?import java.lang.String?>
 
-<StackPane prefHeight="450.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.Controller.RegisterController">
+<StackPane prefHeight="450.0" prefWidth="650.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="vn.edu.uet.daugia.client.controller.RegisterController">
     <children>
         <VBox alignment="CENTER" maxWidth="400.0" spacing="15.0" style="-fx-background-color: #f4f4f4; -fx-background-radius: 10;">
             <padding><Insets bottom="30.0" left="30.0" right="30.0" top="30.0" /></padding>
