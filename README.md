@@ -1,6 +1,6 @@
 ## Hệ thống đấu giá trực tuyến - Nhóm 9 
 
-## 📋 Mô tả bài toán & Phạm vi hệ thống
+## Mô tả bài toán & Phạm vi hệ thống
 
 Hệ thống cho phép nhiều người dùng cùng tham gia cạnh tranh giá để mua sản phẩm trong một khoảng thời gian xác định. Người bán đăng sản phẩm, người mua đặt giá cạnh tranh, và giá bán cuối cùng được xác định tự động khi phiên kết thúc.
 
@@ -15,7 +15,7 @@ Giao tiếp Client–Server sử dụng **JSON qua TCP Socket** (cổng `5000`).
 
 ---
 
-## 🛠️ Công nghệ sử dụng
+##  Công nghệ sử dụng
 
 | Hạng mục | Chi tiết |
 |---|---|
@@ -28,239 +28,214 @@ Giao tiếp Client–Server sử dụng **JSON qua TCP Socket** (cổng `5000`).
 | Unit Test | JUnit 5 (Jupiter) |
 
 ---
+## Yêu Cầu Cài Đặt
 
-## ⚙️ Yêu cầu cài đặt & Môi trường
+Trước khi chạy, đảm bảo máy đã cài đủ:
 
-### Phần mềm bắt buộc
-- **JDK 17** trở lên — [Tải tại đây](https://adoptium.net/)
-- **JavaFX SDK 17+** — [Tải tại đây](https://gluonhq.com/products/javafx/) *(chỉ cần nếu không dùng Maven)*
-- **Maven 3.8+** — [Tải tại đây](https://maven.apache.org/download.cgi)
-- **MySQL Server 8.x** — [Tải tại đây](https://dev.mysql.com/downloads/mysql/)
+- **JDK 17** trở lên — [tải tại đây](https://adoptium.net/)
+- **JavaFX SDK 17+** — [tải tại đây](https://gluonhq.com/products/javafx/)
+- **MySQL Server 8.x** — [tải tại đây](https://dev.mysql.com/downloads/mysql/)
+- **Maven 3.8+** hoặc **IDE hỗ trợ Maven** (IntelliJ IDEA, Eclipse, VS Code)
 
-### Kiểm tra cài đặt
+### Cấu hình Database
 
-```bash
-java -version       # Yêu cầu >= 17
-mvn -version        # Yêu cầu >= 3.8
-mysql --version     # Yêu cầu >= 8.0
-```
+Tạo database và bảng bằng cách chạy script sau trong MySQL:
 
----
-
-## 🗄️ Cấu hình Database
-
-Quá trình khởi chạy được chia làm 3 bước: Chuẩn bị CSDL, Chạy Server và Chạy Client.
-
-Bước 1: Khởi tạo Cơ sở dữ liệu (MySQL)
-Mở MySQL Workbench hoặc Terminal.
-
-Chạy đoạn script SQL sau để tạo CSDL auction_db và các bảng cần thiết:
 ```sql
-
-CREATE DATABASE IF NOT EXISTS auction_db;
+CREATE DATABASE auction_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE auction_db;
 
 CREATE TABLE users (
-    username VARCHAR(50) PRIMARY KEY,
-    password VARCHAR(255) NOT NULL,
-    email VARCHAR(100),
-    role VARCHAR(20) NOT NULL,
-    balance DOUBLE DEFAULT 1000000
+    username    VARCHAR(50)  PRIMARY KEY,
+    password    VARCHAR(255) NOT NULL,
+    email       VARCHAR(100),
+    role        VARCHAR(10)  NOT NULL DEFAULT 'BIDDER',
+    balance     DOUBLE       DEFAULT 0,
+    shop_name   VARCHAR(100),
+    is_active   BOOLEAN      DEFAULT TRUE
 );
 
 CREATE TABLE auctions (
-    id VARCHAR(50) PRIMARY KEY,
-    itemName VARCHAR(255) NOT NULL,
-    description TEXT,
-    sellerName VARCHAR(50),
-    startPrice DOUBLE NOT NULL,
-    currentPrice DOUBLE DEFAULT NULL,
-    startTime DATETIME NOT NULL,
-    endTime DATETIME NOT NULL,
-    status VARCHAR(20) DEFAULT 'OPEN',
-    image_url VARCHAR(500),
-    max_price DOUBLE DEFAULT 0,
-    winner VARCHAR(50)
+    id            VARCHAR(50)  PRIMARY KEY,
+    itemName      VARCHAR(200) NOT NULL,
+    description   TEXT,
+    sellerName    VARCHAR(50),
+    startPrice    DOUBLE       NOT NULL,
+    currentPrice  DOUBLE       DEFAULT 0,
+    max_price     DOUBLE       DEFAULT 0,
+    startTime     VARCHAR(50),
+    endTime       VARCHAR(50),
+    status        VARCHAR(20)  DEFAULT 'RUNNING',
+    winner        VARCHAR(50),
+    image_url     TEXT
 );
 
 CREATE TABLE bids (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    auctionId VARCHAR(50) NOT NULL,
-    bidderId VARCHAR(50) NOT NULL,
-    price DOUBLE NOT NULL,
-    bidTime DATETIME NOT NULL
+    id         INT          AUTO_INCREMENT PRIMARY KEY,
+    auctionId  VARCHAR(50)  NOT NULL,
+    bidderId   VARCHAR(50)  NOT NULL,
+    price      DOUBLE       NOT NULL,
+    bidTime    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 );
 ```
-### Bước 2: Cấu hình kết nối
-```
-Mở file src/vn/edu/uet/daugia/database/DatabaseConnection.java, kiểm tra và cấu hình lại thông tin đăng nhập MySQL cho khớp với máy của thầy/cô:
 
-private static final String URL = "jdbc:mysql://localhost:3306/auction_db";
-private static final String USER = "root";       // <-- Thay đổi nếu cần
-private static final String PASSWORD = "123456"; // <-- Thay đổi nếu cần
-```
+### Cấu hình kết nối Database
 
-## 📁 Cấu trúc thư mục
+Mở file `src/main/java/vn/edu/uet/daugia/server/dao/DatabaseConnection.java` và sửa thông tin phù hợp:
 
-```
-BTL_LTNC_DauGia_2026/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   ├── module-info.java                         # Khai báo module Java
-│   │   │   └── vn/edu/uet/daugia/
-│   │   │       ├── client/
-│   │   │       │   ├── AuctionClient.java               # Điểm khởi động Client (JavaFX)
-│   │   │       │   ├── Controller/                      # Các JavaFX Controller
-│   │   │       │   │   ├── LoginController.java
-│   │   │       │   │   ├── RegisterController.java
-│   │   │       │   │   ├── AuctionListController.java
-│   │   │       │   │   ├── BiddingRoomController.java   # Phòng đấu giá + LineChart realtime
-│   │   │       │   │   ├── ProductCardController.java
-│   │   │       │   │   ├── ProductDetailController.java
-│   │   │       │   │   └── SellerDashboardController.java
-│   │   │       │   ├── model/
-│   │   │       │   │   ├── BidHistoryRow.java
-│   │   │       │   │   └── Product.java
-│   │   │       │   ├── network/
-│   │   │       │   │   ├── NetworkClient.java           # TCP Socket tới Server
-│   │   │       │   │   └── ClientDiscovery.java         # UDP Broadcast dò IP Server
-│   │   │       │   └── util/
-│   │   │       │       ├── AlertUtil.java
-│   │   │       │       ├── AppState.java
-│   │   │       │       ├── DateTimeParseUtil.java
-│   │   │       │       ├── SceneManager.java
-│   │   │       │       └── SessionManager.java
-│   │   │       ├── server/
-│   │   │       │   ├── AuctionServer.java               # Điểm khởi động Server
-│   │   │       │   ├── AuctionManager.java              # Singleton quản lý phiên (RAM)
-│   │   │       │   ├── AuctionObserver.java             # Interface Observer (realtime bid)
-│   │   │       │   ├── AuctionService.java              # Business logic + auto-close scheduler
-│   │   │       │   ├── ClientHandler.java               # Xử lý từng kết nối TCP (thread riêng)
-│   │   │       │   ├── ServerDiscovery.java             # UDP Broadcast phản hồi Client
-│   │   │       │   ├── UserManager.java                 # Tìm Bidder từ DB
-│   │   │       │   └── TestAuctionService.java
-│   │   │       ├── database/
-│   │   │       │   └── DatabaseConnection.java          # Kết nối MySQL
-│   │   │       └── shared/
-│   │   │           ├── exception/
-│   │   │           │   ├── AuctionClosedException.java
-│   │   │           │   ├── AuthenticationException.java
-│   │   │           │   └── InvalidBidException.java
-│   │   │           └── model/
-│   │   │               ├── Auction.java                 # Model chính, dùng ReentrantLock
-│   │   │               ├── AuctionStatus.java           # Enum: OPEN/RUNNING/FINISHED/PAID/CANCELED
-│   │   │               ├── BidMessage.java
-│   │   │               ├── BidTransaction.java
-│   │   │               ├── LoginMessage.java
-│   │   │               ├── RegisterMessage.java
-│   │   │               ├── entity/Entity.java           # Abstract base class
-│   │   │               ├── item/
-│   │   │               │   ├── Item.java                # Abstract
-│   │   │               │   ├── Electronics.java
-│   │   │               │   ├── Art.java
-│   │   │               │   └── Vehicle.java
-│   │   │               └── user/
-│   │   │                   ├── User.java                # Abstract
-│   │   │                   ├── Bidder.java
-│   │   │                   ├── Seller.java
-│   │   │                   └── Admin.java
-│   │   └── resources/
-│   │       └── view/                                    # Các file FXML
-│   │           ├── Login.fxml
-│   │           ├── Register.fxml
-│   │           ├── AuctionList.fxml
-│   │           ├── BiddingRoom.fxml
-│   │           ├── ProductCard.fxml
-│   │           ├── ProductDetail.fxml
-│   │           └── SellerDashboard.fxml
-│   └── test/
-│       └── java/vn/edu/uet/daugia/shared/model/
-│           └── AuctionTest.java                         # 7 test case JUnit 5
-└── pom.xml
+```java
+private static final String URL      = "jdbc:mysql://localhost:3306/auction_db";
+private static final String USER     = "root";       // ← đổi thành username MySQL của bạn
+private static final String PASSWORD = "123456";     // ← đổi thành mật khẩu MySQL của bạn
 ```
 
 ---
 
-## 🚀 Hướng dẫn chạy chương trình
+## 📁 Cấu Trúc Thư Mục
 
-> ⚠️ **Quan trọng: Phải khởi động Server TRƯỚC, rồi mới chạy Client.**
+```
+src/main/java/vn/edu/uet/daugia/
+│
+├── client/                         # Phía Client (JavaFX)
+│   ├── AuctionClient.java          # Điểm khởi động Client
+│   ├── controller/                 # Các màn hình giao diện
+│   │   ├── LoginController.java
+│   │   ├── RegisterController.java
+│   │   ├── AuctionListController.java
+│   │   ├── BiddingRoomController.java
+│   │   ├── ProductDetailController.java
+│   │   ├── ProductCardController.java
+│   │   ├── SellerDashboardController.java
+│   │   └── AdminDashboardController.java
+│   ├── network/
+│   │   ├── NetworkClient.java      # Kết nối TCP tới Server
+│   │   └── ClientDiscovery.java    # Tự dò IP Server qua UDP
+│   ├── model/
+│   │   ├── BidHistoryRow.java
+│   │   └── Product.java
+│   └── util/
+│       ├── AlertUtil.java
+│       ├── SceneManager.java
+│       └── SessionManager.java
+│
+├── server/                         # Phía Server
+│   ├── AuctionServer.java          # Điểm khởi động Server
+│   ├── dao/
+│   │   └── DatabaseConnection.java
+│   ├── service/
+│   │   ├── AuctionManager.java     # Quản lý phiên trong RAM
+│   │   ├── AuctionService.java     # Nghiệp vụ đấu giá
+│   │   ├── AuctionObserver.java    # Interface Observer
+│   │   └── UserManager.java
+│   ├── controller/
+│   │   ├── ClientHandler.java      # Xử lý kết nối từng Client
+│   │   └── ServerDiscovery.java    # Lắng nghe UDP Broadcast
+│   └── admin/
+│       ├── AdminService.java       # Nghiệp vụ Admin
+│       └── AdminHandler.java       # Router lệnh Admin
+│
+└── shared/                         # Dùng chung Client + Server
+    ├── model/
+    │   ├── Auction.java
+    │   ├── AuctionStatus.java
+    │   ├── BidMessage.java
+    │   ├── BidTransaction.java
+    │   ├── LoginMessage.java
+    │   ├── RegisterMessage.java
+    │   ├── entity/
+    │   │   └── Entity.java
+    │   ├── item/                   # Factory Method – Item
+    │   │   ├── Item.java
+    │   │   ├── ItemType.java
+    │   │   ├── ItemFactory.java
+    │   │   ├── ItemFactoryProvider.java
+    │   │   ├── Electronics.java / ElectronicsFactory.java
+    │   │   ├── Art.java / ArtFactory.java
+    │   │   └── Vehicle.java / VehicleFactory.java
+    │   └── user/                   # Factory Method – User
+    │       ├── User.java
+    │       ├── UserRole.java
+    │       ├── UserFactory.java
+    │       ├── UserFactoryProvider.java
+    │       ├── Bidder.java / BidderFactory.java
+    │       ├── Seller.java / SellerFactory.java
+    │       └── Admin.java / AdminFactory.java
+    └── exception/
+        ├── AuctionClosedException.java
+        └── InvalidBidException.java
+```
 
-### Bước 0: Clone và build dự án
+---
+
+## ▶️ Cách Chạy Chương Trình
+
+> **Quan trọng:** Luôn khởi động **Server trước**, sau đó mới chạy **Client**.
+
+### Bước 1 — Build project
 
 ```bash
-# Clone repository
-git clone https://github.com/<your-org>/BTL_LTNC_DauGia_2026.git
-cd BTL_LTNC_DauGia_2026
+# Linux / macOS
+./mvnw clean package -DskipTests
+
+# Windows
+mvnw.cmd clean package -DskipTests
 ```
+
+Hoặc dùng IDE: **Build > Build Project** (IntelliJ), **Project > Build All** (Eclipse).
 
 ---
 
-### Bước 1: Khởi động Server
+### Bước 2 — Chạy Server
 
-Server chạy trên cổng TCP **5000** và lắng nghe UDP Broadcast trên cổng **8888**.
+**Linux / macOS:**
+```bash
+java -cp target/daugia-1.0.jar vn.edu.uet.daugia.server.AuctionServer
+```
 
 **Windows:**
-```cmd
-mvn exec:java -Dexec.mainClass="vn.edu.uet.daugia.server.AuctionServer"
+```bat
+java -cp target\daugia-1.0.jar vn.edu.uet.daugia.server.AuctionServer
 ```
 
-**macOS / Linux:**
-```bash
-mvn exec:java -Dexec.mainClass="vn.edu.uet.daugia.server.AuctionServer"
-```
+**Chạy trực tiếp từ IDE:** Run class `AuctionServer.java`
 
-Hoặc chạy trực tiếp bằng JAR (sau khi build xong):
-
-```bash
-# Windows
-java -cp "target/classes;target/dependency/*" vn.edu.uet.daugia.server.AuctionServer
-
-# macOS / Linux
-java -cp "target/classes:target/dependency/*" vn.edu.uet.daugia.server.AuctionServer
-```
-
-Server khởi động thành công khi bạn thấy:
+Khi Server khởi động thành công, console sẽ hiện:
 ```
 === HỆ THỐNG ĐẤU GIÁ SERVER ĐANG KHỞI ĐỘNG ===
-[LOAD] Đã nạp X phiên RUNNING từ database.
-[SCHEDULER] Đã bật bộ tự động đóng phiên (quét mỗi 10 giây).
 Đang mở cổng 5000 và chờ Client kết nối...
 ```
 
 ---
 
-### Bước 2: Khởi động Client (JavaFX)
+### Bước 3 — Chạy Client
 
-Mở terminal **mới** (giữ nguyên terminal đang chạy Server), chạy:
+**Linux / macOS:**
+```bash
+java --module-path /path/to/javafx-sdk/lib \
+     --add-modules javafx.controls,javafx.fxml \
+     -cp target/daugia-1.0.jar \
+     vn.edu.uet.daugia.client.AuctionClient
+```
 
 **Windows:**
-```cmd
-mvn javafx:run
+```bat
+java --module-path C:\path\to\javafx-sdk\lib ^
+     --add-modules javafx.controls,javafx.fxml ^
+     -cp target\daugia-1.0.jar ^
+     vn.edu.uet.daugia.client.AuctionClient
 ```
 
-**macOS / Linux:**
-```bash
-mvn javafx:run
-```
+> Thay `/path/to/javafx-sdk` bằng đường dẫn thực tế JavaFX SDK trên máy bạn.
 
-Client sẽ **tự động dò tìm IP Server** trong mạng LAN qua UDP Broadcast. Nếu không tìm thấy Server trên mạng, Client tự động kết nối về `127.0.0.1` (localhost).
+**Chạy từ IDE:** Run class `AuctionClient.java` (IDE thường tự xử lý JavaFX module path).
 
->  **Chạy nhiều Client cùng lúc:** Mở thêm terminal và chạy `mvn javafx:run` thêm lần nữa để mô phỏng nhiều người dùng đồng thời.
+Client sẽ tự động dò tìm Server trong cùng mạng LAN qua UDP Broadcast. Nếu không tìm thấy, tự kết nối về `127.0.0.1:5000`.
 
 ---
 
-### Bước 3: Chạy Unit Test
+### Chạy nhiều Client cùng lúc
 
-```bash
-# Chạy tất cả test
-mvn test
-
-# Xem kết quả chi tiết
-mvn test -Dsurefire.useFile=false
-```
-
----
+Mở thêm terminal và lặp lại Bước 3. Mỗi terminal là một Client độc lập — các bid sẽ được cập nhật real-time cho tất cả Client đang kết nối.
 
 ## ✅ Danh sách chức năng đã hoàn thành
 
@@ -327,9 +302,8 @@ mvn test -Dsurefire.useFile=false
 
 ---
 
-## ⚠️ Lưu ý khi chạy
+## 📌 Lưu ý
 
-- **Firewall:** Trên Windows, khi chạy Server lần đầu, Windows Firewall có thể hỏi quyền truy cập mạng — hãy cho phép cả mạng riêng (private) lẫn mạng công cộng (public) để LAN Discovery hoạt động đúng.
-- **Cùng mạng LAN:** Client và Server phải kết nối vào cùng một mạng Wi-Fi hoặc LAN. Nếu chạy cùng máy, Client tự fallback về `127.0.0.1`.
-- **Cổng:** Đảm bảo cổng `5000` (TCP) và `8888` (UDP) không bị chặn hoặc đang được dùng bởi ứng dụng khác.
-- **Database:** Server **phải** kết nối được MySQL trước khi Client đăng nhập. Nếu MySQL chưa chạy, Server vẫn khởi động nhưng mọi thao tác đăng nhập/đấu giá sẽ thất bại.
+- Server và Client có thể chạy trên cùng một máy (dùng `localhost`) hoặc các máy khác nhau trong cùng mạng LAN.
+- Cổng TCP: **5000**, cổng UDP Discovery: **8888** — đảm bảo tường lửa cho phép hai cổng này.
+- Nếu dùng mạng Wi-Fi trường/công ty có chặn UDP Broadcast, Client sẽ tự fallback về `127.0.0.1`.
